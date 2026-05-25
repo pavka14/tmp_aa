@@ -45,13 +45,13 @@ TODO: document assumptions and known limits.
 - Docker must be installed and available on your host machine.
 
 ### Run with Docker
-1. Pull the latest image:
+1. Build the image locally from this repository:
    ```bash
-   docker pull ghcr.io/pavka14/tmp_aa:latest
+   docker build -t tmp_aa:local .
    ```
 2. Run the container:
    ```bash
-   docker run --rm -p 8000:8000 ghcr.io/pavka14/tmp_aa:latest
+   docker run --rm -p 8000:8000 tmp_aa:local
    ```
 
 Then open `http://127.0.0.1:8000/` in your browser on the host machine (outside the container).
