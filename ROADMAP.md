@@ -52,7 +52,7 @@
 
 ## Stage 8 — Deployment implementation (future)
 - [ ] Implement ASGI deployment with Django in async-capable mode.
-- [ ] Configure Uvicorn service running multiple Gunicorn workers.
+- [ ] Configure Gunicorn service running multiple Uvicorn workers (typically about 2x CPU cores).
 - [ ] Add Nginx reverse proxy configuration.
 - [ ] Add production deployment docs and rollout checklist.
 - [ ] Add operational monitoring and health checks.

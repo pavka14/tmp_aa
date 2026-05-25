@@ -49,7 +49,7 @@ Possible approaches considered:
 
 Selected direction:
 - **Async Django (ASGI)** to support long-term expansion toward asynchronous network-device operations initiated from Django views.
-- **Uvicorn service running multiple Gunicorn workers**, fronted by **Nginx** reverse proxy.
+- **Gunicorn service running multiple Uvicorn workers** (typically about 2x available CPU cores), fronted by **Nginx** reverse proxy.
 
 Implementation status:
 - Deployment implementation is **out of scope** for this onboarding issue.
