@@ -12,14 +12,22 @@
 - [x] Add initial test setup and CI test command wiring.
 
 ## Stage 3 — Core data model
-- [ ] Implement `Site` model and admin configuration.
-- [ ] Implement `Device` model (router/switch type) linked to `Site`.
-- [ ] Implement `Interface` model linked to `Device`.
-- [ ] Implement `Connection` model linking interfaces/devices.
-- [ ] Add and review migrations for all core models.
-- [ ] Add proof-of-concept-only data migration for test admin user `admin` / `admin123` (never for real-world deployment).
+- [x] Implement `Site` model and admin configuration.
+- [x] Implement `Device` model (router/switch type) linked to `Site`.
+- [x] Implement `Interface` model linked to `Device`.
+- [x] Implement `Connection` model linking interfaces/devices.
+- [x] Add and review migrations for all core models.
+- [x] Add proof-of-concept-only data migration for test admin user `admin` / `admin123` (never for real-world deployment).
 
-## Stage 4 — API implementation (DRF)
+## Stage 4 — Website implementation (static templates)
+- [x] Add web interface with static views for homepage, docs, and API pages.
+- [x] Add Bootstrap-based base layout with navigation, active-link state, and admin shortcut.
+- [x] Add static homepage cards and modal hierarchy for sites, devices, interfaces, and connections.
+- [x] Add placeholder Documentation and API Specifications pages.
+- [x] Add tests covering static pages and static asset loading.
+- [x] Add static assets required by the Django template pages.
+
+## Stage 5 — API implementation (DRF)
 - [ ] Add Django REST Framework and baseline API configuration.
 - [ ] Add serializers for Site, Device, Interface, Connection.
 - [ ] Implement CRUD API endpoints with serializer-backed validation and error handling.
@@ -27,7 +35,7 @@
 - [ ] Add API URL routing for DRF endpoints.
 - [ ] Add API tests for list/detail/create/update/delete and permissions.
 
-## Stage 5 — Website implementation (Django templates)
+## Stage 6 — Website implementation (Django templates, dynamic data)
 - [ ] Add site list/detail pages.
 - [ ] Add device list/detail pages by site.
 - [ ] Add interface and connection views by device.
@@ -35,7 +43,7 @@
 - [ ] Add manage actions/forms for superuser permissions at this stage.
 - [ ] Add UI tests for key browse/manage flows.
 
-## Stage 6 — Quality and operability
+## Stage 7 — Quality and operability
 - [ ] Configure environment-based settings split (dev/test/prod-ready structure).
 - [ ] Add linting/formatting/static checks and documented local commands.
 - [ ] Add structured logging and error-handling conventions.
@@ -43,14 +51,14 @@
 - [ ] Expand test coverage for edge cases and permissions.
 - [ ] Document architecture and operational assumptions.
 
-## Stage 7 — Packaging and runnable environments
+## Stage 8 — Packaging and runnable environments
 - [ ] Write complete installation and run instructions in README.
 - [ ] Add Dockerfile for local runnable service.
 - [ ] Add docker-compose setup for app + dependencies.
 - [ ] Add one-command tester workflow to run and access UI in browser.
 - [ ] Document API usage examples and smoke-test steps.
 
-## Stage 8 — Deployment implementation (future)
+## Stage 9 — Deployment implementation (future)
 - [ ] Implement ASGI deployment with Django in async-capable mode.
 - [ ] Configure Gunicorn service running multiple Uvicorn workers (typically about 2x CPU cores).
 - [ ] Add Nginx reverse proxy configuration.

@@ -1,0 +1,187 @@
+{% extends 'infrastructure/base.html' %}
+
+{% block content %}
+<h1 class="h3 mb-4">AA Test Site</h1>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="h5 mb-0">Site 1</h2>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1DevicesModal" aria-label="Open Site 1 devices">+</button>
+        </div>
+        <div class="list-group list-group-flush mt-3">
+          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site1DevicesModal">
+            <span>devices</span>
+            <span>2</span>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site1ConnectionsModal">
+            <span>connections</span>
+            <span>2</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="h5 mb-0">Site 2</h2>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site2DevicesModal" aria-label="Open Site 2 devices">+</button>
+        </div>
+        <div class="list-group list-group-flush mt-3">
+          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site2DevicesModal">
+            <span>devices</span>
+            <span>2</span>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site2ConnectionsModal">
+            <span>connections</span>
+            <span>2</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site1DevicesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Site 1 devices</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h4 class="h6 mb-0">Device 1</h4>
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1Device1InterfacesModal" aria-label="Open Site 1 Device 1 interfaces">+</button>
+            </div>
+            <ul class="list-unstyled mb-0 mt-2">
+              <li>interfaces: 16</li>
+              <li>connections: 1</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h4 class="h6 mb-0">Device 2</h4>
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1Device2InterfacesModal" aria-label="Open Site 1 Device 2 interfaces">+</button>
+            </div>
+            <ul class="list-unstyled mb-0 mt-2">
+              <li>interfaces: 16</li>
+              <li>connections: 1</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site2DevicesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Site 2 devices</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Device 1 (interfaces: 16, connections: 1)</p>
+        <p class="mb-0">Device 2 (interfaces: 16, connections: 1)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site1Device1InterfacesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Device 1 interfaces</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h4 class="h6 mb-0">Interface 1</h4>
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1Interface1ConnectionsModal" aria-label="Open Site 1 Device 1 Interface 1 connections">+</button>
+            </div>
+            <p class="mb-0 mt-2">connections: 1</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site1Device2InterfacesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Device 2 interfaces</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Interface 1 (connections: 1)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site1ConnectionsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Site 1 connections</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="mb-0">
+          <li>Connection 1</li>
+          <li>Connection 2</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site2ConnectionsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Site 2 connections</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="mb-0">
+          <li>Connection 1</li>
+          <li>Connection 2</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="site1Interface1ConnectionsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5">Interface 1 connections</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="mb-0">
+          <li>Connection 1</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
