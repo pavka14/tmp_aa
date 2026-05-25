@@ -58,11 +58,15 @@ This builds everything from scratch and is therefore terribly slow.
 
 ### Run with Docker - Option 2
 Use the pre-baked local image archive from this repository:
-1. Load the image from file:
+1. Recreate the tar archive from repository parts:
    ```bash
-   docker image load -i docker_image/tmp_aa_local_image.tar
+   cat docker_image/tmp_aa_local_image.tar.part-* > /tmp/tmp_aa_local_image.tar
    ```
-2. Run the loaded image:
+2. Load the image from file:
+   ```bash
+   docker image load -i /tmp/tmp_aa_local_image.tar
+   ```
+3. Run the loaded image:
    ```bash
    docker run --rm -p 8000:8000 tmp_aa:local
    ```
