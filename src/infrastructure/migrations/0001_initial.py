@@ -83,4 +83,12 @@ class Migration(migrations.Migration):
             model_name='connection',
             constraint=models.UniqueConstraint(condition=models.Q(('active', True)), fields=('connection_id',), name='uniq_active_connection_connection_id'),
         ),
+        migrations.AddConstraint(
+            model_name='connection',
+            constraint=models.CheckConstraint(condition=models.Q(('status__in', ['Connected', 'Disconnected'])), name='connection_status_allowed_values'),
+        ),
+        migrations.AddConstraint(
+            model_name='site',
+            constraint=models.CheckConstraint(condition=models.Q(('status__in', ['String', 'Active', 'Planned', 'Decommissioned'])), name='site_status_allowed_values'),
+        ),
     ]

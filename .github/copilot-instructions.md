@@ -9,6 +9,8 @@
 ## Definition of done for PRs
 - For every future PR, update relevant documentation when needed.
 - This includes agent-facing docs, developer-facing docs, and user-facing docs impacted by the change.
+- Keep PR titles short and direct (for example: `Add code data models`) without extra technical detail.
+- Keep the main PR description/comment updated to reflect the current state of the full PR, not only the latest commit.
 
 ## Python practices
 - Target modern Python with type hints for public functions and methods.
@@ -20,7 +22,9 @@
 - Keep business logic out of views when possible (services/selectors/managers as needed).
 - Keep models focused on domain invariants and relationships.
 - Use migrations for every schema change; never edit applied migrations.
+- If iterative PR updates produce multiple new migrations for the same model change set, consolidate them into one migration before merge.
 - Use Django admin for operational management where required.
+- In Django admin, use `raw_id_fields` for all foreign keys.
 
 ## DRF practices
 - Use serializers for validation and representation; do not duplicate validation in views.
@@ -32,7 +36,13 @@
 - Write tests close to behavior changes and keep them deterministic.
 - Use Django/DRF test tools for request/response and permission coverage.
 - Organize app tests in `tests/` packages (with `__init__.py`) so Django test discovery finds `test*.py` modules automatically.
+- Name Django `TestCase` classes with a `Test` prefix (for example, `TestSiteModel`) and keep names explicit.
 - Cover role-based access (engineer manage vs customer read-only).
 - Mock external systems in unit tests; avoid network calls in default test runs.
 - Use the Django test runner/style (`python manage.py test`), not pytest, for this repository.
 - Run relevant tests before submitting changes.
+
+## Formatting practices
+- Follow PEP 8 formatting conventions.
+- Keep `isort` and `black` available in dependencies and use them for formatting.
+- On every change, run formatters in this order on touched files (excluding migrations): `isort`, then `black`.

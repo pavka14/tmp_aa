@@ -58,6 +58,7 @@ Build a Django-based service that lets users view network infrastructure and con
 - Clear separation of read-only and manage capabilities by role.
 - Consistent data model between website and API.
 - Foundation ready for future asynchronous operations.
+- Code formatting follows PEP 8 conventions.
 
 ## Deployment Direction (Planning)
 Possible approaches considered:
