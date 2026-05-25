@@ -44,7 +44,12 @@ That hierarchy is helpful for understanding the business domain, but it also exp
 None of the implementation in this repository should be treated as production-ready.
 
 #### Authentication and caller trust
-If and when the Application Programming Interface is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Secure Sockets Layer transport, and whitelisted caller hosts. Without those controls, an infrastructure-management interface would be much too exposed.
+If and when the Application Programming Interface is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Transport Layer Security (TLS), whitelisted caller hosts, and a rule that only modern cryptography methods are allowed. Without those controls, an infrastructure-management interface would be much too exposed.
+
+#### Caching, request throttling, and abuse handling
+Caching is not currently considered at all. Still, "to be fair, such a service will have low traffic and caching will probably not make much of a difference". Even so, that should be treated as a conscious limitation of the proof of concept, not as proof that caching concerns never matter.
+
+The API also has no rate limits at present. That is probably not a bad thing in itself, because rate limits can be counter-productive in some operational cases. On the other hand, it may be a good idea to link the service to fail2ban and blacklist Internet Protocol addresses that generate too many unauthorized attempts.
 
 #### Data modelling depth
 The database model needs much more operational data and metadata than it currently has. For example, a serious implementation would need to track connection capacity, used capacity per port, remaining capacity per port, Virtual Local Area Network (VLAN) IDs that are taken, reserved, or free, attached interface extras such as a fibre-to-copper adapter, and other inventory details needed for safe automation and planning. The current schema only hints at the main entities; it does not yet capture the full operational state that a real system would need.
@@ -53,7 +58,7 @@ The database model needs much more operational data and metadata than it current
 Even in its current limited state, the model is weak because it still allows deletions without fully accounting for the fallout. If something higher in the hierarchy is deleted, related records below it can be left hanging. That is already a problem for sites, devices, and interfaces, and it is doubly problematic for a connection because a connection has two ends that both need to remain consistent. A robust design would need stronger lifecycle rules, soft deletion, archival behavior, or workflow-driven change handling so that records cannot drift into broken states.
 
 #### Connection endpoint modelling
-One explicit requirement for this proof of concept was that connection ends should carry triple foreign keys to site, device, and interface. That makes the database denormalized, which is not a **good idea**. Validations have been added as mitigation so that inconsistent combinations are rejected, but validation is only damage control here. It is not a proper substitute for a cleaner normalized design.
+One explicit requirement for this proof of concept was that connection ends should carry triple foreign keys to site, device, and interface. That makes the database denormalized, which is **not a good idea**. Validations have been added as mitigation so that inconsistent combinations are rejected, but validation is only damage control here. It is not a proper substitute for a cleaner normalized design.
 
 There is another modelling weakness as well: connections are not really interface-to-interface in the operational sense. They are from a sub-interface. The present proof of concept simplifies that detail away, which is acceptable for a sketch, but not for a system that needs to reflect real network behavior accurately.
 
