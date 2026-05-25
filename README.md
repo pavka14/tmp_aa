@@ -36,6 +36,8 @@ TODO: document assumptions and known limits.
 - Temporary proof-of-concept limitation: current CI test setup installs dependencies and applies migrations on every run. In a production-grade setup, CI should instead use a pre-built container image with dependencies pre-installed and migrations pre-applied, maintained by a separate workflow that rebuilds the image when requirements or migrations change.
 - Temporary proof-of-concept limitation: `src/requirements.txt` intentionally tracks unfrozen/latest dependency versions for this toy repository; production-grade setups should pin and regularly review exact versions.
 - Temporary proof-of-concept limitation: there is currently only one settings environment. A production-grade setup should use separate settings for local development, CI, production (and optionally staging), selected by an environment variable from `.env`.
+- Temporary proof-of-concept limitation: tests intentionally have no explanatory comments because the current test cases are simple enough to be self-explanatory. In a production-grade test suite, each test should explain what it does and why.
+- Temporary proof-of-concept limitation: in the Docker setup, the application and database run on the same machine and in the same container, which is "good enough for now".
 
 ## How to set up, install and run
 
@@ -43,31 +45,13 @@ TODO: document assumptions and known limits.
 - Docker must be installed and available on your host machine.
 
 ### Run with Docker
-1. Start PostgreSQL on a Docker network:
+1. Pull the latest image:
    ```bash
-   docker network create aa-net
-   docker run --rm -d \
-     --name aa-postgres \
-     --network aa-net \
-     -e POSTGRES_DB=aa_db \
-     -e POSTGRES_USER=postgres \
-     -e POSTGRES_PASSWORD=postgres \
-     postgres:16
+   docker pull ghcr.io/pavka14/tmp_aa:latest
    ```
-2. Build the Django image from this repository root:
+2. Run the container:
    ```bash
-   docker build -t aa-site .
-   ```
-3. Run the Django container (migrations + collectstatic + runserver happen automatically on startup):
-   ```bash
-   docker run --rm -p 8000:8000 \
-     --network aa-net \
-     -e POSTGRES_HOST=aa-postgres \
-     -e POSTGRES_PORT=5432 \
-     -e POSTGRES_DB=aa_db \
-     -e POSTGRES_USER=postgres \
-     -e POSTGRES_PASSWORD=postgres \
-     aa-site
+   docker run --rm -p 8000:8000 ghcr.io/pavka14/tmp_aa:latest
    ```
 
 Then open `http://127.0.0.1:8000/` in your browser on the host machine (outside the container).

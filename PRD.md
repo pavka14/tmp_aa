@@ -89,6 +89,7 @@ Implementation status:
 - Audit trail coverage is currently missing entirely. A proper implementation should track who changed or deleted what, when it happened, why it happened, and both before/after state snapshots so actions are reviewable and reversible.
 - For resilience and investigation workflows, audit data should be stored in two places: structured database models for fast querying and append-only ledger-style text logs where records are never edited in place.
 - Tests currently create records per test method instead of using a shared fixture layer; a reusable general setup fixture strategy would reduce duplication, but is intentionally deferred as overkill for the current PoC stage.
+- Tests for the static website currently omit explanatory comments because they are intentionally simple and self-explanatory. In a production-grade test suite, each test should describe what it validates and why.
 
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.
