@@ -37,6 +37,7 @@
 - Use Django/DRF test tools for request/response and permission coverage.
 - Organize app tests in `tests/` packages (with `__init__.py`) so Django test discovery finds `test*.py` modules automatically.
 - Name Django `TestCase` classes with a `Test` prefix (for example, `TestSiteModel`) and keep names explicit.
+- Keep tests class-based and group them either by model (for model behavior/methods) or by function/feature under test.
 - Cover role-based access (engineer manage vs customer read-only).
 - Mock external systems in unit tests; avoid network calls in default test runs.
 - Use the Django test runner/style (`python manage.py test`), not pytest, for this repository.
@@ -46,3 +47,6 @@
 - Follow PEP 8 formatting conventions.
 - Keep `isort` and `black` available in dependencies and use them for formatting.
 - On every change, run formatters in this order on touched files (excluding migrations): `isort`, then `black`.
+
+## Documentation writing
+- Explanations must explain implications and tradeoffs in plain language; do not only mention high-level terms without context.

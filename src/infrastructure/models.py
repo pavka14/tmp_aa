@@ -3,24 +3,13 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-SITE_STATUS_STRING = "String"
-SITE_STATUS_ACTIVE = "Active"
-SITE_STATUS_PLANNED = "Planned"
-SITE_STATUS_DECOMMISSIONED = "Decommissioned"
-
-CONNECTION_STATUS_CONNECTED = "Connected"
-CONNECTION_STATUS_DISCONNECTED = "Disconnected"
-
 
 class ActiveManager(models.Manager):
-    def get_queryset(self, include_deleted: bool = False):
-        queryset = super().get_queryset()
-        if include_deleted:
-            return queryset
-        return queryset.filter(active=True)
+    def get_queryset(self):
+        return super().get_queryset().filter(active=True)
 
     def with_deleted(self):
-        return self.get_queryset(include_deleted=True)
+        return super().get_queryset()
 
 
 class SoftDeleteModel(models.Model):
@@ -31,6 +20,8 @@ class SoftDeleteModel(models.Model):
 
     class Meta:
         abstract = True
+        base_manager_name = "objects"
+        default_manager_name = "objects"
 
     def delete(self, using=None, keep_parents=False):
         if not self.active:
@@ -42,14 +33,13 @@ class SoftDeleteModel(models.Model):
 
 
 class Site(SoftDeleteModel):
-    STATUS_STRING = SITE_STATUS_STRING
-    STATUS_ACTIVE = SITE_STATUS_ACTIVE
-    STATUS_PLANNED = SITE_STATUS_PLANNED
-    STATUS_DECOMMISSIONED = SITE_STATUS_DECOMMISSIONED
+    SITE_STATUS_ACTIVE = "Active"
+    SITE_STATUS_PLANNED = "Planned"
+    SITE_STATUS_DECOMMISSIONED = "Decommissioned"
 
     name = models.CharField(max_length=64, null=False, blank=False)
     description = models.TextField(default="", blank=True)
-    status = models.CharField(max_length=32, default=STATUS_PLANNED, db_index=True)
+    status = models.CharField(max_length=32, default=SITE_STATUS_PLANNED, db_index=True)
 
     class Meta:
         constraints = [
@@ -57,17 +47,6 @@ class Site(SoftDeleteModel):
                 fields=["name"],
                 condition=Q(active=True),
                 name="uniq_active_site_name",
-            ),
-            models.CheckConstraint(
-                condition=Q(
-                    status__in=[
-                        SITE_STATUS_STRING,
-                        SITE_STATUS_ACTIVE,
-                        SITE_STATUS_PLANNED,
-                        SITE_STATUS_DECOMMISSIONED,
-                    ]
-                ),
-                name="site_status_allowed_values",
             ),
         ]
 
@@ -98,23 +77,42 @@ class Device(SoftDeleteModel):
         return self.name
 
 
+Site._meta.constraints.append(
+    models.CheckConstraint(
+        condition=Q(
+            status__in=[
+                Site.SITE_STATUS_ACTIVE,
+                Site.SITE_STATUS_PLANNED,
+                Site.SITE_STATUS_DECOMMISSIONED,
+            ]
+        ),
+        name="site_status_allowed_values",
+    )
+)
+
+
 class Interface(SoftDeleteModel):
     name = models.CharField(max_length=64, null=False, blank=False)
     device = models.ForeignKey(
         Device, on_delete=models.PROTECT, related_name="interfaces"
     )
 
+    class Meta:
+        abstract = False
+
     def __str__(self):
         return self.name
 
 
 class Connection(SoftDeleteModel):
-    STATUS_CONNECTED = CONNECTION_STATUS_CONNECTED
-    STATUS_DISCONNECTED = CONNECTION_STATUS_DISCONNECTED
+    CONNECTION_STATUS_CONNECTED = "Connected"
+    CONNECTION_STATUS_DISCONNECTED = "Disconnected"
 
     connection_id = models.CharField(max_length=64, null=False, blank=False)
     name = models.CharField(max_length=64, blank=True, default="")
-    status = models.CharField(max_length=32, default=STATUS_DISCONNECTED, db_index=True)
+    status = models.CharField(
+        max_length=32, default=CONNECTION_STATUS_DISCONNECTED, db_index=True
+    )
     start_site = models.ForeignKey(
         Site, on_delete=models.PROTECT, related_name="connections_starting_here"
     )
@@ -157,15 +155,6 @@ class Connection(SoftDeleteModel):
                 condition=Q(active=True),
                 name="uniq_active_connection_connection_id",
             ),
-            models.CheckConstraint(
-                condition=Q(
-                    status__in=[
-                        CONNECTION_STATUS_CONNECTED,
-                        CONNECTION_STATUS_DISCONNECTED,
-                    ]
-                ),
-                name="connection_status_allowed_values",
-            ),
         ]
 
     def clean(self):
@@ -197,8 +186,21 @@ class Connection(SoftDeleteModel):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.clean()
         return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.connection_id
+
+
+Connection._meta.constraints.append(
+    models.CheckConstraint(
+        condition=Q(
+            status__in=[
+                Connection.CONNECTION_STATUS_CONNECTED,
+                Connection.CONNECTION_STATUS_DISCONNECTED,
+            ]
+        ),
+        name="connection_status_allowed_values",
+    )
+)

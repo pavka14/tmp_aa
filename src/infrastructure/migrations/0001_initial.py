@@ -89,6 +89,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='site',
-            constraint=models.CheckConstraint(condition=models.Q(('status__in', ['String', 'Active', 'Planned', 'Decommissioned'])), name='site_status_allowed_values'),
+            constraint=models.CheckConstraint(condition=models.Q(('status__in', ['Active', 'Planned', 'Decommissioned'])), name='site_status_allowed_values'),
         ),
     ]

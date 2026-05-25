@@ -59,6 +59,7 @@ class TestDeviceModel(TestCase):
 
         self.assertFalse(Device.objects.filter(pk=device.pk).exists())
         self.assertTrue(Device.objects.with_deleted().filter(pk=device.pk).exists())
+        self.assertFalse(site.devices.filter(pk=device.pk).exists())
 
 
 class TestInterfaceModel(TestCase):
@@ -72,6 +73,7 @@ class TestInterfaceModel(TestCase):
         self.assertTrue(
             Interface.objects.with_deleted().filter(pk=interface.pk).exists()
         )
+        self.assertFalse(device.interfaces.filter(pk=interface.pk).exists())
 
 
 class TestConnectionModelValidation(TestCase):

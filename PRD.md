@@ -35,10 +35,12 @@ Build a Django-based service that lets users view network infrastructure and con
 
 ### CRUD and deletion behavior
 - Although CRUD APIs are planned, hard deletes are unsafe for production infrastructure inventory data.
+- Referential integrity must be preserved even when records are no longer active, because connection and inventory history still depend on those relationships.
 - Use soft delete semantics for core models (`Site`, `Device`, `Interface`, `Connection`) by setting:
   - `time_deleted` to current timestamp
   - `active` to `False`
-- All foreign keys should use `ON_DELETE=PROTECT` as a partial mitigation against accidental data loss.
+- All foreign keys should use `ON_DELETE=PROTECT` to prevent accidental hard-delete cascades that would break references and erase relationship context.
+- This protection is still partial because bulk database operations can bypass model-level delete logic and status transitions.
 
 ### Access Channels
 - **Website**: a simple Django-rendered website.
@@ -77,7 +79,10 @@ Implementation status:
 - Temporary proof-of-concept limitation: secrets are currently present in the Django settings file for convenience.
 - Production-grade setup should load secrets from a separately managed `.env` (or equivalent secret manager) and keep them out of source control.
 - `status` fields currently use string values for PoC compatibility. A more robust implementation should use integer constants with Django `choices`.
-- Soft-delete behavior can still be bypassed by direct bulk update/delete queries outside model `delete()` usage.
+- Soft-delete behavior can still be bypassed by direct bulk update/delete queries outside model `delete()` usage (for example, queryset bulk operations), so it should not be treated as complete deletion governance.
+- Audit trail coverage is currently missing entirely. A proper implementation should track who changed or deleted what, when it happened, why it happened, and both before/after state snapshots so actions are reviewable and reversible.
+- For resilience and investigation workflows, audit data should be stored in two places: structured database models for fast querying and append-only ledger-style text logs where records are never edited in place.
+- Tests currently create records per test method instead of using a shared fixture layer; a reusable general setup fixture strategy would reduce duplication, but is intentionally deferred as overkill for the current PoC stage.
 
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.
