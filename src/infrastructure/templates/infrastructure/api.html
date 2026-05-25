@@ -53,15 +53,15 @@
 </p>
 <ul>
   <li>
-    <strong><a href="/api/schema/swagger/" target="_blank">Swagger UI</a></strong>
+    <strong><a href="/api/schema/swagger/" target="_blank" rel="noopener noreferrer">Swagger UI</a></strong>
     — explore and try all endpoints via a rich interactive interface.
   </li>
   <li>
-    <strong><a href="/api/schema/redoc/" target="_blank">ReDoc</a></strong>
+    <strong><a href="/api/schema/redoc/" target="_blank" rel="noopener noreferrer">ReDoc</a></strong>
     — a clean, read-focused reference view of the full API schema.
   </li>
   <li>
-    <strong><a href="/api/schema/" target="_blank">OpenAPI schema (YAML)</a></strong>
+    <strong><a href="/api/schema/" target="_blank" rel="noopener noreferrer">OpenAPI schema (YAML)</a></strong>
     — raw machine-readable schema for use with code generators or API clients.
   </li>
 </ul>
@@ -69,10 +69,21 @@
 <h2 class="h5 mt-4">How to use Swagger UI</h2>
 <ol>
   <li>Log in to the <a href="/admin/">Admin</a> interface in another browser tab so your session cookie is set.</li>
-  <li>Open <a href="/api/schema/swagger/" target="_blank">Swagger UI</a>.</li>
+  <li>Open <a href="/api/schema/swagger/" target="_blank" rel="noopener noreferrer">Swagger UI</a>.</li>
   <li>Click <strong>Authorize</strong>, then tick <em>sessionAuth</em> and click <strong>Authorize</strong>.</li>
   <li>Expand any endpoint, click <strong>Try it out</strong>, fill in any required fields, and click <strong>Execute</strong>.</li>
 </ol>
+
+<div class="alert alert-warning mt-2" role="alert">
+  <strong>Note on write operations from Swagger UI:</strong>
+  Django's session authentication requires a CSRF token for POST, PUT, PATCH, and DELETE requests.
+  Swagger UI does not automatically include this token, so write operations (<em>Try it out</em>)
+  may fail with a <code>403 Forbidden (CSRF Failed)</code> response.
+  To work around this, copy the value of the <code>csrftoken</code> cookie from your browser's
+  developer tools and add it manually as an <code>X-CSRFToken</code> request header inside
+  Swagger UI's <em>Request headers</em> field before executing.
+  Read operations (GET) are not affected.
+</div>
 
 <h2 class="h5 mt-4">Example: tracing connections by device</h2>
 <pre class="bg-light border rounded p-3"><code>GET /api/v1/connections/traced/?type=device&amp;id=2</code></pre>

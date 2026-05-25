@@ -143,6 +143,12 @@ class ConnectionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if traced_id <= 0:
+            return Response(
+                {"detail": "'id' must be a positive integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         filter_map = {
             "site": Q(start_site_id=traced_id) | Q(end_site_id=traced_id),
             "device": Q(start_device_id=traced_id) | Q(end_device_id=traced_id),

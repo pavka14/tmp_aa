@@ -44,9 +44,11 @@ Build a Django-based service that lets users view network infrastructure and con
 
 
 ### API permission design (demo-grade)
-- Write operations on all API endpoints are guarded by an `IsSuperUser`
-  permission class that returns `True` only when the requesting user is a
-  Django superuser, and `False` otherwise.
+- Write operations on all API endpoints are guarded by an `IsSuperUserOrReadOnly`
+  permission class.  Read operations (GET) are open to any authenticated user;
+  write operations (POST, PUT, PATCH, DELETE) require the requesting user to be a
+  Django superuser.  The superuser check is delegated to a companion `IsSuperUser`
+  class so there is a single source of truth for that logic.
 - This is intentionally a temporary, demo-grade solution.  In a
   production system, permissions should be expressed as group-based roles
   (e.g. a `Network Engineers` group with explicit per-model/action grants)

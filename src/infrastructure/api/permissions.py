@@ -23,9 +23,12 @@ class IsSuperUserOrReadOnly(BasePermission):
     """
     Allow read-only access to any authenticated user; restrict write operations
     (POST, PUT, PATCH, DELETE) to superusers only.
+
+    Delegates the superuser check to ``IsSuperUser`` so there is a single
+    source of truth for that logic.
     """
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return bool(request.user and request.user.is_authenticated)
-        return bool(request.user and request.user.is_superuser)
+        return IsSuperUser().has_permission(request, view)

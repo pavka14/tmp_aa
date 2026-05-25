@@ -250,6 +250,25 @@ class TestDeviceEndpoints(ApiTestBase):
         self.device1.refresh_from_db()
         self.assertEqual(self.device1.serial_number, "SN-UPDATED")
 
+    def test_update_requires_superuser(self):
+        self.login_regular_user()
+        response = self.client.patch(
+            self.detail_url(self.device1.pk), {"serial_number": "SN-BLOCKED"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_anonymous_returns_403(self):
+        response = self.client.patch(
+            self.detail_url(self.device1.pk), {"serial_number": "SN-ANON"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_retrieve_authenticated(self):
+        self.login_regular_user()
+        response = self.client.get(self.detail_url(self.device1.pk))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], self.device1.name)
+
     def test_delete_as_superuser_soft_deletes(self):
         self.login_superuser()
         device = Device.objects.create(
@@ -259,6 +278,15 @@ class TestDeviceEndpoints(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Device.objects.filter(pk=device.pk).exists())
         self.assertTrue(Device.objects.with_deleted().filter(pk=device.pk).exists())
+
+    def test_delete_requires_superuser(self):
+        self.login_regular_user()
+        response = self.client.delete(self.detail_url(self.device1.pk))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_anonymous_returns_403(self):
+        response = self.client.delete(self.detail_url(self.device1.pk))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class TestInterfaceEndpoints(ApiTestBase):
@@ -464,6 +492,12 @@ class TestConnectionEndpoints(ApiTestBase):
         response = self.client.post(self.list_url, payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_retrieve_authenticated(self):
+        self.login_regular_user()
+        response = self.client.get(self.detail_url(self.conn1.pk))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["connection_id"], self.conn1.connection_id)
+
     def test_update_as_superuser(self):
         self.login_superuser()
         response = self.client.patch(
@@ -475,6 +509,42 @@ class TestConnectionEndpoints(ApiTestBase):
         self.assertEqual(response.data["name"], "Updated Connection")
         self.conn1.refresh_from_db()
         self.assertEqual(self.conn1.name, "Updated Connection")
+
+    def test_update_requires_superuser(self):
+        self.login_regular_user()
+        response = self.client.patch(
+            self.detail_url(self.conn1.pk),
+            {"name": "Blocked Update"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_anonymous_returns_403(self):
+        response = self.client.patch(
+            self.detail_url(self.conn1.pk),
+            {"name": "Anon Update"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_patch_invalid_hierarchy_rejected(self):
+        """PATCH that changes start.device to a device on a different site is rejected."""
+        self.login_superuser()
+        response = self.client.patch(
+            self.detail_url(self.conn1.pk),
+            {
+                "start": {
+                    "site": self.site1.pk,
+                    "device": self.device2.pk,
+                }
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["start_device"],
+            ["Start device must belong to the selected site."],
+        )
 
     def test_delete_as_superuser_soft_deletes(self):
         self.login_superuser()
@@ -562,6 +632,18 @@ class TestTracedConnections(ApiTestBase):
         response = self.client.get("/api/v1/connections/traced/?type=site&id=abc")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "'id' must be a positive integer.")
+
+    def test_trace_non_positive_id_returns_400(self):
+        self.login_regular_user()
+        for bad_id in ("0", "-1"):
+            with self.subTest(id=bad_id):
+                response = self.client.get(
+                    f"/api/v1/connections/traced/?type=site&id={bad_id}"
+                )
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(
+                    response.data["detail"], "'id' must be a positive integer."
+                )
 
     def test_trace_nonexistent_object_returns_404(self):
         self.login_regular_user()

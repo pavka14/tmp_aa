@@ -268,12 +268,15 @@ class ConnectionEndpointSerializer(serializers.Serializer):
     """
     Nested representation of one end of a connection.
 
-    Each FK (device, interface) is rendered as a compact {id, name} object.
+    ``site`` is always present.  ``device`` and ``interface`` are optional —
+    they are omitted from the response when the connection endpoint only
+    specifies a site.  Marking them ``required=False`` here keeps the
+    generated OpenAPI schema accurate for clients.
     """
 
     site = SiteRefSerializer()
-    device = DeviceRefSerializer()
-    interface = InterfaceRefSerializer()
+    device = DeviceRefSerializer(required=False)
+    interface = InterfaceRefSerializer(required=False)
 
 
 class TracedConnectionSerializer(serializers.ModelSerializer):
