@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+# IDE/SDK metadata (local interpreter/workspace settings for editors)
+.idea/
+.vscode/

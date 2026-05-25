@@ -8,8 +8,8 @@
 - [x] Add CONTRIBUTIONS.md with lightweight contributor expectations and test-level definitions.
 
 ## Stage 2 — Project scaffolding
-- [ ] Initialize Django project and base app structure.
-- [ ] Add initial test setup and CI test command wiring.
+- [x] Initialize Django project and base app structure.
+- [x] Add initial test setup and CI test command wiring.
 
 ## Stage 3 — Core data model
 - [ ] Implement `Site` model and admin configuration.
