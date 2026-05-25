@@ -42,6 +42,12 @@ Build a Django-based service that lets users view network infrastructure and con
 - All foreign keys should use `ON_DELETE=PROTECT` to prevent accidental hard-delete cascades that would break references and erase relationship context.
 - This protection is still partial because bulk database operations can bypass model-level delete logic and status transitions.
 
+
+### Website PoC delivery notes
+- For this proof-of-concept, Django serves the web pages and static files directly.
+- Modal open/close behavior in the static website pages is implemented with Bootstrap 5 built-in modal functionality (no HTMX required for this step).
+- For production deployment, static assets should be collected to a dedicated directory and served directly by Nginx instead of Django.
+
 ### Access Channels
 - **Website**: a simple Django-rendered website.
 - **API**: a Django REST Framework (DRF) API exposing equivalent data and operations.
