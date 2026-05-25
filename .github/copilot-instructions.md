@@ -31,6 +31,8 @@
 ## Testing practices
 - Write tests close to behavior changes and keep them deterministic.
 - Use Django/DRF test tools for request/response and permission coverage.
+- Organize app tests in `tests/` packages (with `__init__.py`) so Django test discovery finds `test*.py` modules automatically.
 - Cover role-based access (engineer manage vs customer read-only).
 - Mock external systems in unit tests; avoid network calls in default test runs.
+- Use the Django test runner/style (`python manage.py test`), not pytest, for this repository.
 - Run relevant tests before submitting changes.

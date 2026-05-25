@@ -22,6 +22,24 @@ Build a Django-based service that lets users view network infrastructure and con
 5. At this stage, change operations are restricted to superusers.
 6. Customers have read-only access to all of the above data.
 
+## Implementation notes
+
+### Connection endpoint modeling
+- A connection listing requirement states: "if tracking a Site, return all connections tied directly to the site, plus all connections hitting any device within that site, plus all connections hitting any interface belonging to any device within that site".
+- That requirement implies device/interface endpoints may be optional for some connection records, which does not map cleanly to a single composite foreign key approach.
+- Composite foreign keys are not supported in Django in a way that fits this use case.
+- For proof-of-concept implementation, use explicit endpoint columns:
+  - `start_site`, `start_device`, `start_interface`
+  - `end_site`, `end_device`, `end_interface`
+- Add model validation so interface-to-device and device-to-site hierarchy is always consistent.
+
+### CRUD and deletion behavior
+- Although CRUD APIs are planned, hard deletes are unsafe for production infrastructure inventory data.
+- Use soft delete semantics for core models (`Site`, `Device`, `Interface`, `Connection`) by setting:
+  - `time_deleted` to current timestamp
+  - `active` to `False`
+- All foreign keys should use `ON_DELETE=PROTECT` as a partial mitigation against accidental data loss.
+
 ### Access Channels
 - **Website**: a simple Django-rendered website.
 - **API**: a Django REST Framework (DRF) API exposing equivalent data and operations.
@@ -57,6 +75,8 @@ Implementation status:
 ## Assumptions and limitations
 - Temporary proof-of-concept limitation: secrets are currently present in the Django settings file for convenience.
 - Production-grade setup should load secrets from a separately managed `.env` (or equivalent secret manager) and keep them out of source control.
+- `status` fields currently use string values for PoC compatibility. A more robust implementation should use integer constants with Django `choices`.
+- Soft-delete behavior can still be bypassed by direct bulk update/delete queries outside model `delete()` usage.
 
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.
