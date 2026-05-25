@@ -54,6 +54,10 @@ Selected direction:
 Implementation status:
 - Deployment implementation is **out of scope** for this onboarding issue.
 
+## Assumptions and limitations
+- Temporary proof-of-concept limitation: secrets are currently present in the Django settings file for convenience.
+- Production-grade setup should load secrets from a separately managed `.env` (or equivalent secret manager) and keep them out of source control.
+
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.
 - Add a data migration that creates a `Network Engineers` group for assignable engineer permissions.

@@ -1,3 +1,5 @@
 __pycache__/
 *.py[cod]
-src/db.sqlite3
+# IDE/SDK metadata (local interpreter/workspace settings for editors)
+.idea/
+.vscode/
