@@ -19,7 +19,7 @@ Build a Django-based service that lets users view network infrastructure and con
 2. Users can access the list of devices at a given site.
 3. Users can access the list of interfaces on a given device.
 4. Users can access existing connections between devices.
-5. Network engineers can create, update, and delete sites, devices, interfaces, and connections.
+5. At this stage, change operations are restricted to superusers.
 6. Customers have read-only access to all of the above data.
 
 ### Access Channels
@@ -53,3 +53,10 @@ Selected direction:
 
 Implementation status:
 - Deployment implementation is **out of scope** for this onboarding issue.
+
+## Future developments
+- Replace temporary superuser-only write access with group-based permissions.
+- Add a data migration that creates a `Network Engineers` group for assignable engineer permissions.
+- Add serializer-driven CRUD error handling patterns for referential integrity violations and authorization failures.
+- Add a proof-of-concept-only data migration to create an `admin` user with password `admin123` for tester convenience.
+- The `admin/admin123` migration is strictly for proof-of-concept use and must never be used in real-world deployment.

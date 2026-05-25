@@ -1,4 +1,11 @@
-# tmp_aa
+# Temporary test repository
+
+## Navigation
+- [PRD](./PRD.md)
+- [README](./README.md)
+- [Agent instructions](./.github/copilot-instructions.md)
+- [Contributor guide](./CONTRIBUTIONS.md)
+- [Roadmap](./ROADMAP.md)
 
 ## Overview
 This repository is being onboarded for a new Django product that provides a website and DRF API for viewing and managing network infrastructure.
@@ -23,7 +30,16 @@ TODO: add high-level architecture and component design.
 ## Assumptions and limitations
 TODO: document assumptions and known limits.
 
-Note: deployment architecture implementation (async Django via ASGI, Uvicorn service with multiple Gunicorn workers, Nginx reverse proxy) is intentionally out of scope for this onboarding phase.
+- Temporary proof-of-concept limitation: change permissions are granted only to superusers at this stage.
+- TODO: add a data migration that creates an `admin` user with password `admin123` for testing only (strictly prohibited for real-world deployment).
+- Note: deployment architecture implementation (async Django via ASGI, Uvicorn service with multiple Gunicorn workers, Nginx reverse proxy) is intentionally out of scope for this onboarding phase.
 
 ## How to set up, install and run
 TODO: add local setup, installation, and run instructions.
+
+### Temporary superuser creation (CLI)
+Use Django management command:
+
+```bash
+python manage.py createsuperuser
+```

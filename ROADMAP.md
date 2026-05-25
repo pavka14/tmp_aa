@@ -1,17 +1,14 @@
 # ROADMAP
 
 ## Stage 1 — Repository onboarding and product definition
-- [ ] Add Product Requirements Document (PRD) with roles, entities, channels, and scope.
-- [ ] Add README with product overview and placeholder sections for design/assumptions/setup.
-- [ ] Add deployment-options notes and selected async deployment direction (planning only).
-- [ ] Add agent instructions for Python/Django/DRF and testing best practices.
-- [ ] Add CONTRIBUTIONS.md with lightweight contributor expectations and test-level definitions.
+- [x] Add Product Requirements Document (PRD) with roles, entities, channels, and scope.
+- [x] Add README with product overview and placeholder sections for design/assumptions/setup.
+- [x] Add deployment-options notes and selected async deployment direction (planning only).
+- [x] Add agent instructions for Python/Django/DRF and testing best practices.
+- [x] Add CONTRIBUTIONS.md with lightweight contributor expectations and test-level definitions.
 
 ## Stage 2 — Project scaffolding
 - [ ] Initialize Django project and base app structure.
-- [ ] Add Django REST Framework and baseline API configuration.
-- [ ] Configure environment-based settings split (dev/test/prod-ready structure).
-- [ ] Add baseline URL routing for web and API entry points.
 - [ ] Add initial test setup and CI test command wiring.
 
 ## Stage 3 — Core data model
@@ -20,22 +17,26 @@
 - [ ] Implement `Interface` model linked to `Device`.
 - [ ] Implement `Connection` model linking interfaces/devices.
 - [ ] Add and review migrations for all core models.
+- [ ] Add proof-of-concept-only data migration for test admin user `admin` / `admin123` (never for real-world deployment).
 
 ## Stage 4 — API implementation (DRF)
+- [ ] Add Django REST Framework and baseline API configuration.
 - [ ] Add serializers for Site, Device, Interface, Connection.
-- [ ] Add read endpoints for all core entities.
-- [ ] Add write endpoints restricted to engineer-capable roles.
-- [ ] Add permission classes enforcing engineer manage/customer view-only.
+- [ ] Implement CRUD API endpoints with serializer-backed validation and error handling.
+- [ ] Handle CRUD failure cases (e.g., referential-integrity violations and permission denial).
+- [ ] Add API URL routing for DRF endpoints.
 - [ ] Add API tests for list/detail/create/update/delete and permissions.
 
 ## Stage 5 — Website implementation (Django templates)
 - [ ] Add site list/detail pages.
 - [ ] Add device list/detail pages by site.
 - [ ] Add interface and connection views by device.
-- [ ] Add manage actions/forms for engineer-capable roles.
+- [ ] Add web URL routing for template views.
+- [ ] Add manage actions/forms for superuser permissions at this stage.
 - [ ] Add UI tests for key browse/manage flows.
 
 ## Stage 6 — Quality and operability
+- [ ] Configure environment-based settings split (dev/test/prod-ready structure).
 - [ ] Add linting/formatting/static checks and documented local commands.
 - [ ] Add structured logging and error-handling conventions.
 - [ ] Add seed/sample data for local/demo use.

@@ -6,6 +6,10 @@
 - Follow existing project structure and naming once scaffolding is introduced.
 - Do not add placeholder comments in empty `__init__.py` files.
 
+## Definition of done for PRs
+- For every future PR, update relevant documentation when needed.
+- This includes agent-facing docs, developer-facing docs, and user-facing docs impacted by the change.
+
 ## Python practices
 - Target modern Python with type hints for public functions and methods.
 - Use dataclasses/typed structures where they improve clarity.

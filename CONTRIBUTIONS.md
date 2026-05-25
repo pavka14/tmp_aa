@@ -5,6 +5,7 @@
 - Follow Python, Django, and DRF best practices from `.github/copilot-instructions.md`.
 - Prefer readable code and explicit validation.
 - Add or update tests for behavior changes.
+- Definition of done: update any impacted agent/developer/user documentation as part of each PR.
 
 ## Testing levels
 - **Unit tests**: validate a small isolated unit (function/class) with dependencies mocked/stubbed.
