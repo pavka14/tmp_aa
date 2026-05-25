@@ -22,8 +22,8 @@ class SiteModelTests(TestCase):
                 Site.objects.create(name='Site 1')
 
         second.delete()
-        second.refresh_from_db()
-        self.assertFalse(second.active)
+        second_with_deleted = Site.objects.with_deleted().get(pk=second.pk)
+        self.assertFalse(second_with_deleted.active)
 
         third = Site.objects.create(name='Site 1')
         self.assertEqual(third.name, 'Site 1')
