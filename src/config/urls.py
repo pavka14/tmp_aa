@@ -9,4 +9,5 @@ urlpatterns = [
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += [
     path("", include("infrastructure.urls")),
+    path("api/", include("infrastructure.api.urls")),
 ]

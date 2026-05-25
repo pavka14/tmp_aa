@@ -43,7 +43,34 @@ Build a Django-based service that lets users view network infrastructure and con
 - This protection is still partial because bulk database operations can bypass model-level delete logic and status transitions.
 
 
-### Website PoC delivery notes
+### API permission design (demo-grade)
+- Write operations on all API endpoints are guarded by an `IsSuperUser`
+  permission class that returns `True` only when the requesting user is a
+  Django superuser, and `False` otherwise.
+- This is intentionally a temporary, demo-grade solution.  In a
+  production system, permissions should be expressed as group-based roles
+  (e.g. a `Network Engineers` group with explicit per-model/action grants)
+  rather than relying on superuser status, which bypasses all permission
+  checks and is too coarse-grained for a real deployment.  See Limitations
+  for the corresponding constraint.
+
+### API serializer validators (proof-of-concept)
+- The `SiteSerializer` applies an API-level name length constraint:
+  minimum 4 characters, maximum 40 characters.
+- The underlying `Site` model field allows up to 64 characters.  This
+  demonstrates that the API layer can enforce a stricter contract than the
+  database layer.  These two validation layers are intentionally
+  independent: models guard database integrity; serializers shape the API
+  contract.  This is a proof-of-concept example only; production-grade
+  APIs should align model and serializer constraints to avoid confusion.
+
+### Connection tracing endpoint
+- `GET /api/v1/connections/traced/?type=<type>&id=<id>` returns all active
+  connections that touch the specified site, device, or interface on either
+  their start or end endpoint.  The response includes the traced object's
+  type, id, and name, plus a count and full list of matching connections
+  with nested start/end endpoint representations (site → device →
+  interface hierarchy).
 - For this proof-of-concept, Django serves the web pages and static files directly.
 - Modal open/close behavior in the static website pages is implemented with Bootstrap 5 built-in modal functionality (no HTMX required for this step).
 - For production deployment, static assets should be collected to a dedicated directory and served directly by Nginx instead of Django.
@@ -51,6 +78,22 @@ Build a Django-based service that lets users view network infrastructure and con
 ### Access Channels
 - **Website**: a simple Django-rendered website.
 - **API**: a Django REST Framework (DRF) API exposing equivalent data and operations.
+
+### Django REST Framework (DRF)
+DRF is a widely-used, mature library that adds REST API capabilities on top of
+Django.  It provides serializer classes (schema + validation), generic view
+classes (list, retrieve, create, update, delete), authentication and permission
+hooks, a browsable API renderer, and router-based URL registration.  All API
+endpoints in this application are built using DRF ModelViewSets backed by DRF
+ModelSerializers.
+
+### DRF-Spectacular
+DRF-Spectacular is an OpenAPI 3 schema-generation library for DRF.  It
+introspects ViewSets, serializers, and docstrings at runtime to produce a
+standards-compliant OpenAPI schema without any manual annotation required.
+From that schema it renders two interactive browser UIs — Swagger UI and
+ReDoc — that let users authenticate and make live API requests directly from
+the browser.
 
 ### User and Permission Management
 - End-user management workflows are out of scope for now.
@@ -90,6 +133,9 @@ Implementation status:
 - For resilience and investigation workflows, audit data should be stored in two places: structured database models for fast querying and append-only ledger-style text logs where records are never edited in place.
 - Tests currently create records per test method instead of using a shared fixture layer; a reusable general setup fixture strategy would reduce duplication, but is intentionally deferred as overkill for the current PoC stage.
 - Tests for the static website currently omit explanatory comments because they are intentionally simple and self-explanatory. In a production-grade test suite, each test should describe what it validates and why.
+- **API authentication**: The API currently uses Django session authentication (cookie-based). Alternatives include API Key authentication (simple, but requires key management infrastructure), Bearer/JWT tokens (stateless, but requires token issuance, rotation, and revocation logic), and OAuth 2.0 (the most complete and standards-compliant approach, supporting delegated access and fine-grained scopes). OAuth 2.0 is considered overkill for a demo because it requires additional infrastructure: an authorization server, token store, client management, refresh-token rotation, and scope definitions. Session auth is acceptable for this PoC where all access is first-party and browser-based.
+- **API permission model**: Write access is currently guarded solely by Django's superuser flag (`is_superuser`). This is a demo-grade shortcut. A production-ready system should use group-based role permissions (e.g. a `Network Engineers` group with explicit per-model write grants) so that write access can be granted to non-superuser accounts without giving them full administrative privileges.
+- **API-level validators**: The `SiteSerializer` enforces a name length window (4–40 characters) that is stricter than the underlying model field (max 64). This is a proof-of-concept demonstration of layered validation. In production, model and serializer constraints should be aligned or the stricter constraint should live in the model so it is enforced consistently across all code paths.
 
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.

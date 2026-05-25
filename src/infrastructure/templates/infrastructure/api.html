@@ -2,5 +2,101 @@
 
 {% block content %}
 <h1 class="h3">API Specifications</h1>
-<p class="mb-0">to do</p>
+
+<p class="lead">
+  This application exposes a REST API built with
+  <strong>Django REST Framework (DRF)</strong> and documented interactively
+  with <strong>DRF-Spectacular</strong>.
+</p>
+
+<h2 class="h5 mt-4">Base URL</h2>
+<p>All API endpoints live under <code>/api/v1/</code>.</p>
+
+<h2 class="h5 mt-4">Resources &amp; endpoints</h2>
+<table class="table table-bordered table-sm">
+  <thead class="table-light">
+    <tr><th>Resource</th><th>Endpoint</th><th>Operations</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sites</td><td><code>/api/v1/sites/</code></td><td>list, create, retrieve, update, delete</td></tr>
+    <tr><td>Devices</td><td><code>/api/v1/devices/</code></td><td>list, create, retrieve, update, delete</td></tr>
+    <tr><td>Interfaces</td><td><code>/api/v1/interfaces/</code></td><td>list, create, retrieve, update, delete</td></tr>
+    <tr><td>Connections</td><td><code>/api/v1/connections/</code></td><td>list, create, retrieve, update, delete</td></tr>
+    <tr>
+      <td>Traced connections</td>
+      <td><code>/api/v1/connections/traced/</code></td>
+      <td>
+        list all connections touching a site, device, or interface.<br>
+        Query parameters: <code>type</code> (site&nbsp;/&nbsp;device&nbsp;/&nbsp;interface)
+        and <code>id</code> (primary key).
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="h5 mt-4">Authentication</h2>
+<p>
+  The API uses <strong>Django session authentication</strong>. Log in via the
+  <a href="/admin/">Admin</a> interface (or any standard Django login view) to
+  obtain a session cookie, then include that cookie in subsequent API requests.
+</p>
+<p>
+  Read operations (GET) are available to any authenticated user.
+  Write operations (POST, PUT, PATCH, DELETE) are restricted to
+  <strong>superusers</strong> only.
+</p>
+
+<h2 class="h5 mt-4">Interactive documentation</h2>
+<p>
+  Two interactive API browsers are available. Both let you authenticate with
+  your session cookie and make live requests directly from the browser.
+</p>
+<ul>
+  <li>
+    <strong><a href="/api/schema/swagger/" target="_blank">Swagger UI</a></strong>
+    — explore and try all endpoints via a rich interactive interface.
+  </li>
+  <li>
+    <strong><a href="/api/schema/redoc/" target="_blank">ReDoc</a></strong>
+    — a clean, read-focused reference view of the full API schema.
+  </li>
+  <li>
+    <strong><a href="/api/schema/" target="_blank">OpenAPI schema (YAML)</a></strong>
+    — raw machine-readable schema for use with code generators or API clients.
+  </li>
+</ul>
+
+<h2 class="h5 mt-4">How to use Swagger UI</h2>
+<ol>
+  <li>Log in to the <a href="/admin/">Admin</a> interface in another browser tab so your session cookie is set.</li>
+  <li>Open <a href="/api/schema/swagger/" target="_blank">Swagger UI</a>.</li>
+  <li>Click <strong>Authorize</strong>, then tick <em>sessionAuth</em> and click <strong>Authorize</strong>.</li>
+  <li>Expand any endpoint, click <strong>Try it out</strong>, fill in any required fields, and click <strong>Execute</strong>.</li>
+</ol>
+
+<h2 class="h5 mt-4">Example: tracing connections by device</h2>
+<pre class="bg-light border rounded p-3"><code>GET /api/v1/connections/traced/?type=device&amp;id=2</code></pre>
+<p>Response (abbreviated):</p>
+<pre class="bg-light border rounded p-3"><code>{
+  "traced_object": {"type": "device", "id": 2, "name": "Core-Switch-02"},
+  "connections_count": 2,
+  "connections": [
+    {
+      "id": 12,
+      "connection_id": "CONN-1002",
+      "name": "Core Switch Uplink",
+      "status": "Connected",
+      "start_target": {
+        "site":      {"id": 1, "name": "London Data Center"},
+        "device":    {"id": 1, "name": "London-Router-01"},
+        "interface": {"id": 4, "name": "GigabitEthernet0/1"}
+      },
+      "end_target": {
+        "site":      {"id": 1, "name": "London Data Center"},
+        "device":    {"id": 2, "name": "Core-Switch-02"},
+        "interface": {"id": 9, "name": "GigabitEthernet0/24"}
+      }
+    }
+  ]
+}</code></pre>
 {% endblock %}

@@ -28,12 +28,18 @@
 - [x] Add static assets required by the Django template pages.
 
 ## Stage 5 — API implementation (DRF)
-- [ ] Add Django REST Framework and baseline API configuration.
-- [ ] Add serializers for Site, Device, Interface, Connection.
-- [ ] Implement CRUD API endpoints with serializer-backed validation and error handling.
-- [ ] Handle CRUD failure cases (e.g., referential-integrity violations and permission denial).
-- [ ] Add API URL routing for DRF endpoints.
-- [ ] Add API tests for list/detail/create/update/delete and permissions.
+- [x] Add Django REST Framework and baseline API configuration.
+- [x] Add serializers for Site, Device, Interface, Connection.
+- [x] Implement CRUD API endpoints with serializer-backed validation and error handling.
+- [x] Handle CRUD failure cases (e.g., referential-integrity violations and permission denial).
+- [x] Add API URL routing for DRF endpoints.
+- [x] Add API tests for list/detail/create/update/delete and permissions.
+- [x] Add `IsSuperUser` permission class (write restricted to superusers; documented as demo-grade in PRD).
+- [x] Add site-name validators in `SiteSerializer` (min 4 / max 40); documented as proof-of-concept in PRD.
+- [x] Add `connections/traced/` endpoint (by site, device, or interface) with nested response schema.
+- [x] Install and configure DRF-Spectacular; add Swagger UI and ReDoc interactive schema browsers.
+- [x] Update `/api/` static page with human-readable explanation, usage instructions, and links to interactive docs.
+- [x] Update PRD with DRF, Spectacular, auth, permission, and validator design notes and limitations.
 
 ## Stage 6 — Website implementation (Django templates, dynamic data)
 - [ ] Add site list/detail pages.
