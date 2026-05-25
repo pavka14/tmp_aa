@@ -44,7 +44,7 @@ TODO: document assumptions and known limits.
 ### Docker requirements
 - Docker must be installed and available on your host machine.
 
-### Run with Docker
+### Run with Docker - Option 1
 1. Build the image locally from this repository:
    ```bash
    docker build -t tmp_aa:local .
@@ -53,6 +53,23 @@ TODO: document assumptions and known limits.
    ```bash
    docker run --rm -p 8000:8000 tmp_aa:local
    ```
+
+This builds everything from scratch and is therefore terribly slow.
+
+### Run with Docker - Option 2
+Use the pre-baked local image archive from this repository:
+1. Load the image from file:
+   ```bash
+   docker image load -i docker_image/tmp_aa_local_image.tar
+   ```
+2. Run the loaded image:
+   ```bash
+   docker run --rm -p 8000:8000 tmp_aa:local
+   ```
+
+Notes:
+- This avoids a full local rebuild, but it creates a maintenance headache: the baked image archive must be rebuilt and refreshed with future developments.
+- We considered publishing the image via `ghcr.io`, but in this PoC stage it was not deemed practical because the user received an `access denied` error.
 
 Then open `http://127.0.0.1:8000/` in your browser on the host machine (outside the container).
 
