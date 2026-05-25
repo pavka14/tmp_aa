@@ -57,23 +57,46 @@ TODO: document assumptions and known limits.
 This builds everything from scratch and is therefore terribly slow.
 
 ### Run with Docker - Option 2
-Use the pre-baked local image archive from this repository:
-1. Recreate the tar archive from repository parts:
-   ```bash
-   cat docker_image/tmp_aa_local_image.tar.part-* > /tmp/tmp_aa_local_image.tar
-   ```
-2. Load the image from file:
-   ```bash
-   docker image load -i /tmp/tmp_aa_local_image.tar
-   ```
-3. Run the loaded image:
-   ```bash
-   docker run --rm -p 8000:8000 tmp_aa:local
-   ```
+We considered distributing a pre-baked local image archive from this repository, but it required an enormous download split across several files, so it was not practical and was abandoned.
 
 Notes:
-- This avoids a full local rebuild, but it creates a maintenance headache: the baked image archive must be rebuilt and refreshed with future developments.
-- We considered publishing the image via `ghcr.io`, but in this PoC stage it was not deemed practical because the user received an `access denied` error.
+- This approach would have created a maintenance headache: the baked image archive would need to be rebuilt and refreshed with future developments.
+- We also considered publishing the image via `ghcr.io`, but in this PoC stage it was not deemed practical because the user received an `access denied` error.
+
+### Run without Docker - Option 3 (not practical - too demanding to the tester)
+This is how a tester can run the app similarly to the author setup, but it pre-supposes the tester already has PostgreSQL on the host and can create a new user with database-creation permissions.
+
+1. Create and activate a local virtual environment:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r src/requirements.txt
+   ```
+3. Create a PostgreSQL user and database on the host (example):
+   ```bash
+   createuser --pwprompt --createdb aa_user
+   createdb -O aa_user aa_db
+   ```
+4. Export DB settings to point Django to that host PostgreSQL instance:
+   ```bash
+   export POSTGRES_HOST=127.0.0.1
+   export POSTGRES_PORT=5432
+   export POSTGRES_DB=aa_db
+   export POSTGRES_TEST_DB=aa_test_db
+   export POSTGRES_USER=aa_user
+   export POSTGRES_PASSWORD=your_password
+   ```
+5. Run migrations and start Django:
+   ```bash
+   python src/manage.py migrate --noinput
+   python src/manage.py runserver 0.0.0.0:8000
+   ```
+
+### Option 4 - TODO
+The demo site will be hosted elsewhere and linked from this document.
 
 Then open `http://127.0.0.1:8000/` in your browser on the host machine (outside the container).
 
