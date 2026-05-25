@@ -39,6 +39,42 @@ TODO: document assumptions and known limits.
 - Temporary proof-of-concept limitation: tests intentionally have no explanatory comments because the current test cases are simple enough to be self-explanatory. In a production-grade test suite, each test should explain what it does and why.
 - Temporary proof-of-concept limitation: in the Docker setup, the application and database run on the same machine and in the same container, which is "good enough for now".
 
+## REST API
+
+The application exposes a full REST API built with Django REST Framework (DRF).
+
+### Interactive documentation (browser)
+
+Once the application is running, the following interactive UIs are available without any additional tooling:
+
+| URL | Description |
+|-----|-------------|
+| `/api/schema/swagger/` | Swagger UI — try requests directly from the browser |
+| `/api/schema/redoc/` | ReDoc — clean reference documentation |
+| `/api/schema/` | Raw OpenAPI schema download (JSON/YAML) |
+
+### Endpoints
+
+| Prefix | Description |
+|--------|-------------|
+| `GET /api/v1/sites/` | List all sites |
+| `GET /api/v1/devices/` | List all devices |
+| `GET /api/v1/interfaces/` | List all interfaces |
+| `GET /api/v1/connections/` | List all connections |
+| `GET /api/v1/connections/traced/?type=<site\|device\|interface>&id=<pk>` | List all connections touching a given object |
+
+Standard CRUD (POST, GET `{id}/`, PUT/PATCH `{id}/`, DELETE `{id}/`) is available on all four model prefixes.  List endpoints return paginated results (100 items per page).
+
+### Authentication
+
+The API uses Django session authentication.  Log in via the Django admin (`/admin/`) or the standard login form to obtain a session cookie.  All endpoints (including read-only) require authentication; unauthenticated requests receive a `403 Forbidden` response.
+
+Write operations (POST, PUT, PATCH, DELETE) are restricted to superusers.
+
+### A note on docstrings
+
+DRF-Spectacular automatically includes ViewSet and serializer docstrings in the generated OpenAPI schema and renders them in Swagger UI and ReDoc.  Any text in a docstring is therefore **user-facing documentation** and should be written accordingly.
+
 ## How to set up, install and run
 
 ### Docker requirements

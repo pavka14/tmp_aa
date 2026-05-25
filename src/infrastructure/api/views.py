@@ -32,7 +32,7 @@ class SiteViewSet(viewsets.ModelViewSet):
     Write operations are restricted to superusers.
     """
 
-    queryset = Site.objects.all()
+    queryset = Site.objects.order_by("pk")
     serializer_class = SiteSerializer
     permission_classes = [IsSuperUserOrReadOnly]
 
@@ -45,7 +45,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
     Write operations are restricted to superusers.
     """
 
-    queryset = Device.objects.select_related("site").all()
+    queryset = Device.objects.select_related("site").order_by("pk")
     serializer_class = DeviceSerializer
     permission_classes = [IsSuperUserOrReadOnly]
 
@@ -58,7 +58,7 @@ class InterfaceViewSet(viewsets.ModelViewSet):
     Write operations are restricted to superusers.
     """
 
-    queryset = Interface.objects.select_related("device__site").all()
+    queryset = Interface.objects.select_related("device__site").order_by("pk")
     serializer_class = InterfaceSerializer
     permission_classes = [IsSuperUserOrReadOnly]
 
@@ -81,7 +81,7 @@ class ConnectionViewSet(viewsets.ModelViewSet):
         "end_site",
         "end_device",
         "end_interface",
-    ).all()
+    ).order_by("pk")
     serializer_class = ConnectionSerializer
     permission_classes = [IsSuperUserOrReadOnly]
 

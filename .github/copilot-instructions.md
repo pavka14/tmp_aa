@@ -31,6 +31,7 @@
 - Apply explicit permission classes and role-aware access controls.
 - Keep ViewSets/APIViews thin and delegate domain logic.
 - Prefer deterministic API responses and stable field naming.
+- **Docstrings are user-facing**: DRF-Spectacular automatically includes ViewSet, serializer, and action docstrings in the generated OpenAPI schema and renders them in the Swagger UI and ReDoc browser interfaces.  Any docstring on a DRF component is therefore public-facing documentation.  Write them for API consumers, not for internal developers.  Do not include implementation notes, TODO markers, "PoC" caveats, or debugging context in docstrings; those belong in code comments or developer documentation only.
 
 ## Testing practices
 - Write tests close to behavior changes and keep them deterministic.
@@ -42,6 +43,9 @@
 - Mock external systems in unit tests; avoid network calls in default test runs.
 - Use the Django test runner/style (`python manage.py test`), not pytest, for this repository.
 - Run relevant tests before submitting changes.
+- **Test anonymous access**: every endpoint test class must include tests that verify unauthenticated (anonymous) requests are rejected with the correct status code.
+- **Assert database state**: after a create or update operation, do not only assert the HTTP response; also fetch the record from the database and assert that the stored values match the submitted payload.
+- **Assert complete error messages**: when testing validation errors, assert the full error message string exactly as returned by the API, not just the presence of the error key.
 
 ## Formatting practices
 - Follow PEP 8 formatting conventions.

@@ -75,6 +75,49 @@ Build a Django-based service that lets users view network infrastructure and con
 - Modal open/close behavior in the static website pages is implemented with Bootstrap 5 built-in modal functionality (no HTMX required for this step).
 - For production deployment, static assets should be collected to a dedicated directory and served directly by Nginx instead of Django.
 
+### Connection create/update payload structure
+- Create and update payloads for the Connection endpoint use a nested tuple
+  structure for the two endpoints instead of flat FK fields:
+  ```json
+  {
+    "connection_id": "CONN-001",
+    "status": "Connected",
+    "start": {"site": 1, "device": 2, "interface": 3},
+    "end":   {"site": 4, "device": 5, "interface": 6}
+  }
+  ```
+  `site` is required in both objects; `device` and `interface` are optional.
+- FK values are resolved against the **active** record set only; attempting to
+  reference a soft-deleted site, device, or interface produces a 400 error.
+  This validation is automatic because `ActiveManager` (the default manager)
+  filters to `active=True`, so `PrimaryKeyRelatedField` never finds
+  soft-deleted rows.
+
+### API partial-update (PATCH) behaviour
+- DRF's standard `PATCH` semantics mean that any field omitted from the
+  payload keeps its current value on the instance.  For the nested `start`/
+  `end` connection endpoint objects this is intentional: a PATCH payload that
+  supplies only `start` leaves the `end` endpoint unchanged.
+- This is a *delta* model: the payload represents the change to apply, not
+  the complete new state of the record.  The full six-field state (both
+  endpoints) is always validated by `Connection.clean()` after merging, so a
+  partial payload cannot create an inconsistent record.
+- The trade-off: callers must be aware that omitting a field in a PATCH
+  request does not clear it.  To clear an optional FK field (e.g. remove a
+  device from an endpoint) the field must be explicitly sent as `null`.
+  In a production API this behaviour should be clearly documented in the
+  OpenAPI schema and tested against consumer expectations.
+
+### Docstrings and user-visible text
+- DRF-Spectacular introspects ViewSet and serializer docstrings at runtime
+  and exposes them verbatim in the OpenAPI schema, in the Swagger UI, and in
+  ReDoc.  This means **any docstring on a ViewSet, serializer, or action is
+  effectively user-facing documentation**.  Docstrings must therefore be
+  written with the same care as any other public-facing content: accurate,
+  complete, professional, and free of internal implementation notes that
+  could mislead API consumers.  Do not leave debugging notes, provisional
+  language ("TODO", "PoC"), or internal-only commentary in docstrings.
+
 ### Access Channels
 - **Website**: a simple Django-rendered website.
 - **API**: a Django REST Framework (DRF) API exposing equivalent data and operations.
@@ -132,6 +175,7 @@ Implementation status:
 - Audit trail coverage is currently missing entirely. A proper implementation should track who changed or deleted what, when it happened, why it happened, and both before/after state snapshots so actions are reviewable and reversible.
 - For resilience and investigation workflows, audit data should be stored in two places: structured database models for fast querying and append-only ledger-style text logs where records are never edited in place.
 - Tests currently create records per test method instead of using a shared fixture layer; a reusable general setup fixture strategy would reduce duplication, but is intentionally deferred as overkill for the current PoC stage.
+- A proof-of-concept data migration creates an `admin`/`admin123` superuser for local/demo convenience.  API tests deliberately do **not** use this account: it is not guaranteed to exist in all environments (a fresh deployment without that migration applied would not have it), and relying on migration-created credentials in tests would make the test suite brittle.  Each test class creates its own superuser via `User.objects.create_superuser` instead.
 - Tests for the static website currently omit explanatory comments because they are intentionally simple and self-explanatory. In a production-grade test suite, each test should describe what it validates and why.
 - **API authentication**: The API currently uses Django session authentication (cookie-based). Alternatives include API Key authentication (simple, but requires key management infrastructure), Bearer/JWT tokens (stateless, but requires token issuance, rotation, and revocation logic), and OAuth 2.0 (the most complete and standards-compliant approach, supporting delegated access and fine-grained scopes). OAuth 2.0 is considered overkill for a demo because it requires additional infrastructure: an authorization server, token store, client management, refresh-token rotation, and scope definitions. Session auth is acceptable for this PoC where all access is first-party and browser-based.
 - **API permission model**: Write access is currently guarded solely by Django's superuser flag (`is_superuser`). This is a demo-grade shortcut. A production-ready system should use group-based role permissions (e.g. a `Network Engineers` group with explicit per-model write grants) so that write access can be granted to non-superuser accounts without giving them full administrative privileges.
@@ -143,3 +187,4 @@ Implementation status:
 - Add serializer-driven CRUD error handling patterns for referential integrity violations and authorization failures.
 - Add a proof-of-concept-only data migration to create an `admin` user with password `admin123` for tester convenience.
 - The `admin/admin123` migration is strictly for proof-of-concept use and must never be used in real-world deployment.
+- **TODO (out of scope)**: All list endpoints currently return all matching records (up to the page size of 100). They need additional query parameters for client-controlled ordering (e.g. `?ordering=name`), per-request page size limits, and keyword search/filtering. These features require adding filter backends (e.g. `django-filter`, DRF `SearchFilter`, `OrderingFilter`) and are deferred to a future stage.

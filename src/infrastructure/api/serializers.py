@@ -66,8 +66,8 @@ class SiteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Site
-        fields = ["id", "name", "description", "status", "active"]
-        read_only_fields = ["active"]
+        fields = ["id", "name", "description", "status", "active", "time_deleted"]
+        read_only_fields = ["id", "active", "time_deleted"]
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -75,8 +75,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ["id", "name", "site", "serial_number", "active"]
-        read_only_fields = ["active"]
+        fields = ["id", "name", "site", "serial_number", "active", "time_deleted"]
+        read_only_fields = ["id", "active", "time_deleted"]
 
 
 class InterfaceSerializer(serializers.ModelSerializer):
@@ -84,17 +84,78 @@ class InterfaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Interface
-        fields = ["id", "name", "device", "active"]
-        read_only_fields = ["active"]
+        fields = ["id", "name", "device", "active", "time_deleted"]
+        read_only_fields = ["id", "active", "time_deleted"]
+
+
+# ---------------------------------------------------------------------------
+# Connection endpoint nested input/output
+# ---------------------------------------------------------------------------
+
+
+class ConnectionEndpointInputSerializer(serializers.Serializer):
+    """
+    Nested input for one end of a connection.
+
+    ``site`` is required.  ``device`` and ``interface`` are optional but must
+    follow the site → device → interface hierarchy enforced by the model's
+    ``clean()`` method.
+
+    All three FK values are resolved against the *active* record set: attempts
+    to reference a soft-deleted site, device, or interface will be rejected with
+    a 400 error.  This is automatic because the default manager (``ActiveManager``)
+    filters to ``active=True`` and PrimaryKeyRelatedField uses it for lookups.
+    """
+
+    site = serializers.PrimaryKeyRelatedField(queryset=Site.objects.all())
+    device = serializers.PrimaryKeyRelatedField(
+        queryset=Device.objects.all(), required=False, allow_null=True, default=None
+    )
+    interface = serializers.PrimaryKeyRelatedField(
+        queryset=Interface.objects.all(), required=False, allow_null=True, default=None
+    )
 
 
 class ConnectionSerializer(serializers.ModelSerializer):
     """
     Serializer for the Connection model.
 
-    Cross-field validation (device ↔ site, interface ↔ device) is delegated to
-    the model's ``clean()`` method to avoid duplicating business logic.
+    **Creating and updating connections**
+
+    Payloads must supply the complete endpoint tuple via ``start`` and ``end``
+    nested objects rather than flat FK fields::
+
+        {
+            "connection_id": "CONN-001",
+            "status": "Connected",
+            "start": {"site": 1, "device": 2, "interface": 3},
+            "end":   {"site": 4, "device": 5, "interface": 6}
+        }
+
+    Each nested object is validated by ``ConnectionEndpointInputSerializer``,
+    which rejects references to soft-deleted records automatically.  Cross-field
+    integrity (device belongs to the given site, interface belongs to the given
+    device) is then delegated to the model's ``clean()`` method so validation
+    logic is not duplicated in the serializer.
+
+    **Partial updates (PATCH)**
+
+    When processing a PATCH request, any top-level field omitted from the
+    payload keeps its current value on the instance.  For the ``start`` and
+    ``end`` nested objects this means: if a PATCH payload supplies only ``start``,
+    the ``end`` endpoint is taken unchanged from the existing record before
+    model-level cross-field validation runs.  This lets callers update a single
+    endpoint without re-supplying the other.  The full six-field state is always
+    validated by ``clean()`` after merging, so partial payloads cannot create
+    inconsistent records.
+
+    This behaviour is intentional but noteworthy: a partial-update payload
+    represents a *delta* against the current state, not the complete new state.
+    See the Limitations section in the PRD for the corresponding trade-off note.
     """
+
+    start = ConnectionEndpointInputSerializer(write_only=True)
+    end = ConnectionEndpointInputSerializer(write_only=True)
 
     class Meta:
         model = Connection
@@ -103,36 +164,99 @@ class ConnectionSerializer(serializers.ModelSerializer):
             "connection_id",
             "name",
             "status",
-            "start_site",
-            "start_device",
-            "start_interface",
-            "end_site",
-            "end_device",
-            "end_interface",
+            "start",
+            "end",
             "active",
+            "time_deleted",
         ]
-        read_only_fields = ["active"]
+        read_only_fields = ["id", "active", "time_deleted"]
 
-    def validate(self, attrs):
+    def to_representation(self, instance: Connection) -> dict:
+        ret = super().to_representation(instance)
+        ret["start"] = {
+            "site": instance.start_site_id,
+            "device": instance.start_device_id,
+            "interface": instance.start_interface_id,
+        }
+        ret["end"] = {
+            "site": instance.end_site_id,
+            "device": instance.end_device_id,
+            "interface": instance.end_interface_id,
+        }
+        return ret
+
+    def validate(self, attrs: dict) -> dict:
+        """
+        Run model-level cross-field validation.
+
+        Builds a temporary Connection object to call ``model.clean()`` so that
+        device ↔ site and interface ↔ device consistency is checked without
+        duplicating validation rules.  For partial updates the current instance
+        state is merged with the incoming delta first.
+        """
+
+        def _endpoint_kwargs(prefix: str, endpoint: dict) -> dict:
+            return {
+                f"{prefix}_site": endpoint.get("site"),
+                f"{prefix}_device": endpoint.get("device"),
+                f"{prefix}_interface": endpoint.get("interface"),
+            }
+
         if self.instance:
-            # For partial/full updates: build a merged view of existing + new data.
-            merged = {}
-            for field in Connection._meta.fields:
-                if field.primary_key:
-                    continue
-                merged[field.attname] = getattr(self.instance, field.attname)
-            # Overwrite with submitted FK values (DRF uses field.name → object).
-            for attr_name, value in attrs.items():
-                merged[attr_name] = value
+            merged = {
+                "start_site": self.instance.start_site,
+                "start_device": self.instance.start_device,
+                "start_interface": self.instance.start_interface,
+                "end_site": self.instance.end_site,
+                "end_device": self.instance.end_device,
+                "end_interface": self.instance.end_interface,
+                "connection_id": self.instance.connection_id,
+                "name": self.instance.name,
+                "status": self.instance.status,
+            }
+            for prefix in ("start", "end"):
+                if prefix in attrs:
+                    merged.update(_endpoint_kwargs(prefix, attrs[prefix]))
+            for key in ("connection_id", "name", "status"):
+                if key in attrs:
+                    merged[key] = attrs[key]
             temp = Connection(**merged)
         else:
-            temp = Connection(**attrs)
+            flat: dict = {}
+            for prefix in ("start", "end"):
+                flat.update(_endpoint_kwargs(prefix, attrs.get(prefix, {})))
+            for key in ("connection_id", "name", "status"):
+                if key in attrs:
+                    flat[key] = attrs[key]
+            temp = Connection(**flat)
 
         try:
             temp.clean()
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message_dict)
         return attrs
+
+    def create(self, validated_data: dict) -> Connection:
+        flat: dict = {}
+        for prefix in ("start", "end"):
+            endpoint = validated_data.pop(prefix, {})
+            flat[f"{prefix}_site"] = endpoint.get("site")
+            flat[f"{prefix}_device"] = endpoint.get("device")
+            flat[f"{prefix}_interface"] = endpoint.get("interface")
+        flat.update(validated_data)
+        return Connection.objects.create(**flat)
+
+    def update(self, instance: Connection, validated_data: dict) -> Connection:
+        for prefix in ("start", "end"):
+            endpoint = validated_data.pop(prefix, None)
+            if endpoint is not None:
+                setattr(instance, f"{prefix}_site", endpoint.get("site"))
+                setattr(instance, f"{prefix}_device", endpoint.get("device"))
+                setattr(instance, f"{prefix}_interface", endpoint.get("interface"))
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 # ---------------------------------------------------------------------------
@@ -144,13 +268,12 @@ class ConnectionEndpointSerializer(serializers.Serializer):
     """
     Nested representation of one end of a connection.
 
-    Each optional FK (device, interface) is rendered as a compact {id, name}
-    object and omitted from the output when null.
+    Each FK (device, interface) is rendered as a compact {id, name} object.
     """
 
     site = SiteRefSerializer()
-    device = DeviceRefSerializer(allow_null=True)
-    interface = InterfaceRefSerializer(allow_null=True)
+    device = DeviceRefSerializer()
+    interface = InterfaceRefSerializer()
 
 
 class TracedConnectionSerializer(serializers.ModelSerializer):
