@@ -22,6 +22,26 @@ Build a Django-based service that lets users view network infrastructure and con
 5. At this stage, change operations are restricted to superusers.
 6. Customers have read-only access to all of the above data.
 
+## Implementation notes
+
+### Connection endpoint modeling
+- A connection listing requirement states: "if tracking a Site, return all connections tied directly to the site, plus all connections hitting any device within that site, plus all connections hitting any interface belonging to any device within that site".
+- That requirement implies device/interface endpoints may be optional for some connection records, which does not map cleanly to a single composite foreign key approach.
+- Composite foreign keys are not supported in Django in a way that fits this use case.
+- For proof-of-concept implementation, use explicit endpoint columns:
+  - `start_site`, `start_device`, `start_interface`
+  - `end_site`, `end_device`, `end_interface`
+- Add model validation so interface-to-device and device-to-site hierarchy is always consistent.
+
+### CRUD and deletion behavior
+- Although CRUD APIs are planned, hard deletes are unsafe for production infrastructure inventory data.
+- Referential integrity must be preserved even when records are no longer active, because connection and inventory history still depend on those relationships.
+- Use soft delete semantics for core models (`Site`, `Device`, `Interface`, `Connection`) by setting:
+  - `time_deleted` to current timestamp
+  - `active` to `False`
+- All foreign keys should use `ON_DELETE=PROTECT` to prevent accidental hard-delete cascades that would break references and erase relationship context.
+- This protection is still partial because bulk database operations can bypass model-level delete logic and status transitions.
+
 ### Access Channels
 - **Website**: a simple Django-rendered website.
 - **API**: a Django REST Framework (DRF) API exposing equivalent data and operations.
@@ -40,6 +60,7 @@ Build a Django-based service that lets users view network infrastructure and con
 - Clear separation of read-only and manage capabilities by role.
 - Consistent data model between website and API.
 - Foundation ready for future asynchronous operations.
+- Code formatting follows PEP 8 conventions.
 
 ## Deployment Direction (Planning)
 Possible approaches considered:
@@ -57,6 +78,11 @@ Implementation status:
 ## Assumptions and limitations
 - Temporary proof-of-concept limitation: secrets are currently present in the Django settings file for convenience.
 - Production-grade setup should load secrets from a separately managed `.env` (or equivalent secret manager) and keep them out of source control.
+- `status` fields currently use string values for PoC compatibility. A more robust implementation should use integer constants with Django `choices`.
+- Soft-delete behavior can still be bypassed by direct bulk update/delete queries outside model `delete()` usage (for example, queryset bulk operations), so it should not be treated as complete deletion governance.
+- Audit trail coverage is currently missing entirely. A proper implementation should track who changed or deleted what, when it happened, why it happened, and both before/after state snapshots so actions are reviewable and reversible.
+- For resilience and investigation workflows, audit data should be stored in two places: structured database models for fast querying and append-only ledger-style text logs where records are never edited in place.
+- Tests currently create records per test method instead of using a shared fixture layer; a reusable general setup fixture strategy would reduce duplication, but is intentionally deferred as overkill for the current PoC stage.
 
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.
