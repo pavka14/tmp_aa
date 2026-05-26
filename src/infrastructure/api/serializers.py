@@ -116,7 +116,16 @@ class InterfaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Interface
-        fields = ["url", "id", "name", "device", "active", "time_deleted"]
+        fields = [
+            "url",
+            "id",
+            "name",
+            "device",
+            "speed",
+            "status",
+            "active",
+            "time_deleted",
+        ]
         read_only_fields = ["id", "active", "time_deleted"]
 
 

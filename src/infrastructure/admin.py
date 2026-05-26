@@ -26,9 +26,9 @@ class DeviceAdmin(admin.ModelAdmin):
 
 @admin.register(Interface)
 class InterfaceAdmin(admin.ModelAdmin):
-    list_display = ("name", "device", "active", "time_deleted")
+    list_display = ("name", "device", "status", "speed", "active", "time_deleted")
     search_fields = ("name",)
-    list_filter = ("active",)
+    list_filter = ("status", "active")
     raw_id_fields = ("device",)
 
     def get_queryset(self, request):

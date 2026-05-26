@@ -93,10 +93,18 @@ class Device(SoftDeleteModel):
 
 
 class Interface(SoftDeleteModel):
+    INTERFACE_STATUS_UP = "Up"
+    INTERFACE_STATUS_DOWN = "Down"
+    INTERFACE_STATUS_MAINTENANCE = "Maintenance"
+
     name = models.CharField(max_length=64, null=False, blank=False)
     device = models.ForeignKey(
         Device, on_delete=models.PROTECT, related_name="interfaces"
     )
+    speed = models.PositiveIntegerField(
+        verbose_name="throughput in Mbps", null=True, blank=True, default=None
+    )
+    status = models.CharField(max_length=32, default=INTERFACE_STATUS_UP, db_index=True)
 
     class Meta:
         verbose_name = "interface"
@@ -106,6 +114,16 @@ class Interface(SoftDeleteModel):
                 fields=["device", "name"],
                 condition=Q(active=True),
                 name="uniq_active_interface_device_name",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    status__in=[
+                        "Up",
+                        "Down",
+                        "Maintenance",
+                    ]
+                ),
+                name="interface_status_allowed_values",
             ),
         ]
 

@@ -354,6 +354,45 @@ class TestInterfaceEndpoints(ApiTestBase):
         self.assertFalse(Interface.objects.filter(pk=iface.pk).exists())
         self.assertTrue(Interface.objects.with_deleted().filter(pk=iface.pk).exists())
 
+    def test_create_with_speed_and_status(self):
+        self.login_superuser()
+        response = self.client.post(
+            self.list_url,
+            {
+                "name": "eth3",
+                "device": self.device1.pk,
+                "speed": 10000,
+                "status": Interface.INTERFACE_STATUS_DOWN,
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["speed"], 10000)
+        self.assertEqual(response.data["status"], Interface.INTERFACE_STATUS_DOWN)
+        iface = Interface.objects.get(name="eth3", device=self.device1)
+        self.assertEqual(iface.speed, 10000)
+        self.assertEqual(iface.status, Interface.INTERFACE_STATUS_DOWN)
+
+    def test_create_defaults_speed_null_status_up(self):
+        self.login_superuser()
+        response = self.client.post(
+            self.list_url,
+            {"name": "eth4", "device": self.device1.pk},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data["speed"])
+        self.assertEqual(response.data["status"], Interface.INTERFACE_STATUS_UP)
+
+    def test_update_speed_and_status(self):
+        self.login_superuser()
+        response = self.client.patch(
+            self.detail_url(self.iface1.pk),
+            {"speed": 100, "status": Interface.INTERFACE_STATUS_MAINTENANCE},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.iface1.refresh_from_db()
+        self.assertEqual(self.iface1.speed, 100)
+        self.assertEqual(self.iface1.status, Interface.INTERFACE_STATUS_MAINTENANCE)
+
 
 class TestConnectionEndpoints(ApiTestBase):
     list_url = "/api/v1/connections/"
