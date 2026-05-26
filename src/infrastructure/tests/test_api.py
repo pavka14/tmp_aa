@@ -381,6 +381,9 @@ class TestInterfaceEndpoints(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIsNone(response.data["speed"])
         self.assertEqual(response.data["status"], Interface.INTERFACE_STATUS_UP)
+        iface = Interface.objects.get(name="eth4", device=self.device1)
+        self.assertIsNone(iface.speed)
+        self.assertEqual(iface.status, Interface.INTERFACE_STATUS_UP)
 
     def test_update_speed_and_status(self):
         self.login_superuser()

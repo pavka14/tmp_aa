@@ -101,10 +101,21 @@ class Interface(SoftDeleteModel):
     device = models.ForeignKey(
         Device, on_delete=models.PROTECT, related_name="interfaces"
     )
+    INTERFACE_STATUS_CHOICES = [
+        (INTERFACE_STATUS_UP, INTERFACE_STATUS_UP),
+        (INTERFACE_STATUS_DOWN, INTERFACE_STATUS_DOWN),
+        (INTERFACE_STATUS_MAINTENANCE, INTERFACE_STATUS_MAINTENANCE),
+    ]
+
     speed = models.PositiveIntegerField(
         verbose_name="throughput in Mbps", null=True, blank=True, default=None
     )
-    status = models.CharField(max_length=32, default=INTERFACE_STATUS_UP, db_index=True)
+    status = models.CharField(
+        max_length=32,
+        default=INTERFACE_STATUS_UP,
+        db_index=True,
+        choices=INTERFACE_STATUS_CHOICES,
+    )
 
     class Meta:
         verbose_name = "interface"
