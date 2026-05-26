@@ -63,6 +63,24 @@ class TestDeviceModel(TestCase):
 
 
 class TestInterfaceModel(TestCase):
+    def test_active_unique_name_per_device_with_soft_delete(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        other_device = Device.objects.create(
+            name="Device 2", site=site, serial_number="sn-2"
+        )
+        first = Interface.objects.create(name="eth0", device=device)
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Interface.objects.create(name="eth0", device=device)
+
+        Interface.objects.create(name="eth0", device=other_device)
+
+        first.delete()
+        recreated = Interface.objects.create(name="eth0", device=device)
+        self.assertEqual(recreated.name, "eth0")
+
     def test_manager_excludes_deleted_by_default(self):
         site = Site.objects.create(name="Site 1")
         device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
@@ -74,6 +92,23 @@ class TestInterfaceModel(TestCase):
             Interface.objects.with_deleted().filter(pk=interface.pk).exists()
         )
         self.assertFalse(device.interfaces.filter(pk=interface.pk).exists())
+
+    def test_str_includes_device_name(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        interface = Interface.objects.create(name="eth0", device=device)
+
+        self.assertEqual(str(interface), "Device 1 / eth0")
+
+    def test_verbose_names_are_defined(self):
+        self.assertEqual(Site._meta.verbose_name, "site")
+        self.assertEqual(Site._meta.verbose_name_plural, "sites")
+        self.assertEqual(Device._meta.verbose_name, "device")
+        self.assertEqual(Device._meta.verbose_name_plural, "devices")
+        self.assertEqual(Interface._meta.verbose_name, "interface")
+        self.assertEqual(Interface._meta.verbose_name_plural, "interfaces")
+        self.assertEqual(Connection._meta.verbose_name, "connection")
+        self.assertEqual(Connection._meta.verbose_name_plural, "connections")
 
 
 class TestConnectionModelValidation(TestCase):
