@@ -61,6 +61,18 @@ class TestDeviceModel(TestCase):
         self.assertTrue(Device.objects.with_deleted().filter(pk=device.pk).exists())
         self.assertFalse(site.devices.filter(pk=device.pk).exists())
 
+    def test_soft_deleted_object_can_be_edited_and_stays_deleted(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        device.delete()
+
+        device.name = "Device 1 updated"
+        device.save()
+
+        reloaded = Device.objects.with_deleted().get(pk=device.pk)
+        self.assertEqual(reloaded.name, "Device 1 updated")
+        self.assertFalse(reloaded.active)
+
 
 class TestInterfaceModel(TestCase):
     def test_active_unique_name_per_device_with_soft_delete(self):
