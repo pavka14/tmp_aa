@@ -3,185 +3,316 @@
 {% block content %}
 <h1 class="h3 mb-4">AA Test Site</h1>
 
-<div class="row g-4">
-  <div class="col-md-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <h2 class="h5 mb-0">Site 1</h2>
-          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1DevicesModal" aria-label="Open Site 1 devices">+</button>
-        </div>
-        <div class="list-group list-group-flush mt-3">
-          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site1DevicesModal">
-            <span>devices</span>
-            <span>2</span>
-          </button>
-          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site1ConnectionsModal">
-            <span>connections</span>
-            <span>2</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+<div id="home-status" class="mb-4"></div>
+<div id="sites-grid" class="row g-4"></div>
+<div id="home-modals"></div>
 
-  <div class="col-md-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <h2 class="h5 mb-0">Site 2</h2>
-          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site2DevicesModal" aria-label="Open Site 2 devices">+</button>
-        </div>
-        <div class="list-group list-group-flush mt-3">
-          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site2DevicesModal">
-            <span>devices</span>
-            <span>2</span>
-          </button>
-          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#site2ConnectionsModal">
-            <span>connections</span>
-            <span>2</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<script>
+  const isAuthenticated = {{ request.user.is_authenticated|yesno:"true,false" }};
+  const homeUrls = {
+    admin: "{% url 'admin:index' %}",
+    sites: "{% url 'site-list' %}",
+    devices: "{% url 'device-list' %}",
+    interfaces: "{% url 'interface-list' %}",
+    connections: "{% url 'connection-list' %}"
+  };
 
-<div class="modal fade" id="site1DevicesModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Site 1 devices</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="card mb-3">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <h4 class="h6 mb-0">Device 1</h4>
-              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1Device1InterfacesModal" aria-label="Open Site 1 Device 1 interfaces">+</button>
+  const statusContainer = document.getElementById("home-status");
+  const gridContainer = document.getElementById("sites-grid");
+  const modalsContainer = document.getElementById("home-modals");
+
+  function renderStatus(html, cssClass = "alert-info") {
+    statusContainer.innerHTML = `<div class="alert ${cssClass} mb-0">${html}</div>`;
+  }
+
+  function escapeHtml(value) {
+    const element = document.createElement("div");
+    element.textContent = String(value ?? "");
+    return element.innerHTML;
+  }
+
+  async function fetchPaginated(url) {
+    const results = [];
+    let next = url;
+
+    while (next) {
+      const response = await fetch(next, {
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status}) for ${next}`);
+      }
+
+      const payload = await response.json();
+      if (Array.isArray(payload)) {
+        return payload;
+      }
+
+      if (Array.isArray(payload.results)) {
+        results.push(...payload.results);
+        next = payload.next;
+      } else {
+        return payload;
+      }
+    }
+
+    return results;
+  }
+
+  function countConnectionsByPredicate(connections, predicate) {
+    return connections.filter((connection) => predicate(connection.start) || predicate(connection.end)).length;
+  }
+
+  function buildInterfaceConnectionsModal(interfaceObj, connections) {
+    const modalId = `interface-${interfaceObj.id}-connections-modal`;
+    const matching = connections.filter(
+      (connection) => connection.start.interface === interfaceObj.id || connection.end.interface === interfaceObj.id
+    );
+
+    const body = matching.length
+      ? `<ul class="mb-0">${matching
+          .map((connection) => `<li>${escapeHtml(connection.connection_id)}${connection.name ? ` — ${escapeHtml(connection.name)}` : ""}</li>`)
+          .join("")}</ul>`
+      : '<p class="mb-0 text-muted">no data yet</p>';
+
+    return {
+      id: modalId,
+      html: `
+        <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title h5">${escapeHtml(interfaceObj.name)} connections</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">${body}</div>
             </div>
-            <ul class="list-unstyled mb-0 mt-2">
-              <li>interfaces: 16</li>
-              <li>connections: 1</li>
-            </ul>
           </div>
         </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <h4 class="h6 mb-0">Device 2</h4>
-              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1Device2InterfacesModal" aria-label="Open Site 1 Device 2 interfaces">+</button>
+      `
+    };
+  }
+
+  function buildDeviceInterfacesModal(device, interfaces, connections) {
+    const modalId = `device-${device.id}-interfaces-modal`;
+
+    const rows = interfaces.length
+      ? interfaces
+          .map((interfaceObj) => {
+            const connectionCount = countConnectionsByPredicate(
+              connections,
+              (endpoint) => endpoint.interface === interfaceObj.id
+            );
+            const interfaceConnectionsModal = buildInterfaceConnectionsModal(interfaceObj, connections);
+            return {
+              row: `
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h4 class="h6 mb-0">${escapeHtml(interfaceObj.name)}</h4>
+                      <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${interfaceConnectionsModal.id}" aria-label="Open ${escapeHtml(interfaceObj.name)} connections">+</button>
+                    </div>
+                    <p class="mb-0 mt-2">connections: ${connectionCount}</p>
+                  </div>
+                </div>
+              `,
+              nestedModal: interfaceConnectionsModal.html
+            };
+          })
+      : [];
+
+    const body = rows.length
+      ? rows.map((item) => item.row).join("")
+      : '<p class="mb-0 text-muted">no data yet</p>';
+
+    return {
+      id: modalId,
+      html: `
+        <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title h5">${escapeHtml(device.name)} interfaces</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">${body}</div>
             </div>
-            <ul class="list-unstyled mb-0 mt-2">
-              <li>interfaces: 16</li>
-              <li>connections: 1</li>
-            </ul>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
+      `,
+      nested: rows.map((item) => item.nestedModal).join("")
+    };
+  }
 
-<div class="modal fade" id="site2DevicesModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Site 2 devices</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-2">Device 1 (interfaces: 16, connections: 1)</p>
-        <p class="mb-0">Device 2 (interfaces: 16, connections: 1)</p>
-      </div>
-    </div>
-  </div>
-</div>
+  function buildSiteDevicesModal(site, devices, interfaces, connections) {
+    const modalId = `site-${site.id}-devices-modal`;
 
-<div class="modal fade" id="site1Device1InterfacesModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Device 1 interfaces</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <h4 class="h6 mb-0">Interface 1</h4>
-              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#site1Interface1ConnectionsModal" aria-label="Open Site 1 Device 1 Interface 1 connections">+</button>
+    const body = devices.length
+      ? devices
+          .map((device) => {
+            const deviceInterfaces = interfaces.filter((interfaceObj) => interfaceObj.device === device.id);
+            const connectionCount = countConnectionsByPredicate(
+              connections,
+              (endpoint) => endpoint.device === device.id
+            );
+            const interfacesModal = buildDeviceInterfacesModal(device, deviceInterfaces, connections);
+            return {
+              row: `
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h4 class="h6 mb-0">${escapeHtml(device.name)}</h4>
+                      <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${interfacesModal.id}" aria-label="Open ${escapeHtml(device.name)} interfaces">+</button>
+                    </div>
+                    <ul class="list-unstyled mb-0 mt-2">
+                      <li>interfaces: ${deviceInterfaces.length}</li>
+                      <li>connections: ${connectionCount}</li>
+                    </ul>
+                  </div>
+                </div>
+              `,
+              nestedModal: interfacesModal.html + interfacesModal.nested
+            };
+          })
+          .reduce(
+            (acc, current) => ({
+              rows: acc.rows + current.row,
+              nested: acc.nested + current.nestedModal
+            }),
+            { rows: "", nested: "" }
+          )
+      : { rows: '<p class="mb-0 text-muted">no data yet</p>', nested: "" };
+
+    return {
+      id: modalId,
+      html: `
+        <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title h5">${escapeHtml(site.name)} devices</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">${body.rows}</div>
             </div>
-            <p class="mb-0 mt-2">connections: 1</p>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
+      `,
+      nested: body.nested
+    };
+  }
 
-<div class="modal fade" id="site1Device2InterfacesModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Device 2 interfaces</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-0">Interface 1 (connections: 1)</p>
-      </div>
-    </div>
-  </div>
-</div>
+  function buildSiteConnectionsModal(site, connections) {
+    const modalId = `site-${site.id}-connections-modal`;
+    const matching = connections.filter(
+      (connection) => connection.start.site === site.id || connection.end.site === site.id
+    );
 
-<div class="modal fade" id="site1ConnectionsModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Site 1 connections</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="mb-0">
-          <li>Connection 1</li>
-          <li>Connection 2</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+    const body = matching.length
+      ? `<ul class="mb-0">${matching
+          .map((connection) => `<li>${escapeHtml(connection.connection_id)}${connection.name ? ` — ${escapeHtml(connection.name)}` : ""}</li>`)
+          .join("")}</ul>`
+      : '<p class="mb-0 text-muted">no data yet</p>';
 
-<div class="modal fade" id="site2ConnectionsModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Site 2 connections</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="mb-0">
-          <li>Connection 1</li>
-          <li>Connection 2</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+    return {
+      id: modalId,
+      html: `
+        <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title h5">${escapeHtml(site.name)} connections</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">${body}</div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+  }
 
-<div class="modal fade" id="site1Interface1ConnectionsModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title h5">Interface 1 connections</h3>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="mb-0">
-          <li>Connection 1</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+  function renderCards(sites, devices, interfaces, connections) {
+    const cards = [];
+    const modals = [];
+
+    sites.forEach((site) => {
+      const siteDevices = devices.filter((device) => device.site === site.id);
+      const siteConnectionCount = countConnectionsByPredicate(
+        connections,
+        (endpoint) => endpoint.site === site.id
+      );
+      const devicesModal = buildSiteDevicesModal(site, siteDevices, interfaces, connections);
+      const connectionsModal = buildSiteConnectionsModal(site, connections);
+
+      cards.push(`
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h5 mb-0">${escapeHtml(site.name)}</h2>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${devicesModal.id}" aria-label="Open ${escapeHtml(site.name)} devices">+</button>
+              </div>
+              <div class="list-group list-group-flush mt-3">
+                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#${devicesModal.id}">
+                  <span>devices</span>
+                  <span>${siteDevices.length}</span>
+                </button>
+                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between" data-bs-toggle="modal" data-bs-target="#${connectionsModal.id}">
+                  <span>connections</span>
+                  <span>${siteConnectionCount}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      modals.push(devicesModal.html, devicesModal.nested, connectionsModal.html);
+    });
+
+    gridContainer.innerHTML = cards.join("");
+    modalsContainer.innerHTML = modals.join("");
+  }
+
+  async function loadInfrastructureMap() {
+    if (!isAuthenticated) {
+      renderStatus(
+        `Please <a href="${homeUrls.admin}">log in</a> and reload to view the infrastructure map.`,
+        "alert-warning"
+      );
+      return;
+    }
+
+    renderStatus("Loading infrastructure map...");
+
+    try {
+      const [sites, devices, interfaces, connections] = await Promise.all([
+        fetchPaginated(homeUrls.sites),
+        fetchPaginated(homeUrls.devices),
+        fetchPaginated(homeUrls.interfaces),
+        fetchPaginated(homeUrls.connections)
+      ]);
+
+      if (!sites.length) {
+        renderStatus(
+          `no data yet — use the <a href="${homeUrls.sites}">API web interface</a> to create some sites, then return and reload.`,
+          "alert-secondary"
+        );
+        return;
+      }
+
+      renderStatus(`Loaded ${sites.length} site${sites.length === 1 ? "" : "s"}.`, "alert-success");
+      renderCards(sites, devices, interfaces, connections);
+    } catch (error) {
+      renderStatus(`Could not load infrastructure map. ${escapeHtml(error.message)}`, "alert-danger");
+    }
+  }
+
+  loadInfrastructureMap();
+</script>
 {% endblock %}

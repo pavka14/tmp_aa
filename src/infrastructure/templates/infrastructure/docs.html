@@ -1,6 +1,198 @@
 {% extends 'infrastructure/base.html' %}
 
 {% block content %}
-<h1 class="h3">Documentation</h1>
-<p class="mb-0">to do</p>
+<div class="documentation-content">
+<h1>Temporary test repository</h1>
+<h2>Navigation</h2>
+<ul>
+<li><a href="https://github.com/pavka14/tmp_aa/blob/main/PRD.md" target="_blank" rel="noopener noreferrer">PRD</a></li>
+<li><a href="https://github.com/pavka14/tmp_aa/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a></li>
+<li><a href="https://github.com/pavka14/tmp_aa/blob/main/.github/copilot-instructions.md" target="_blank" rel="noopener noreferrer">Agent instructions</a></li>
+<li><a href="https://github.com/pavka14/tmp_aa/blob/main/CONTRIBUTIONS.md" target="_blank" rel="noopener noreferrer">Contributor guide</a></li>
+<li><a href="https://github.com/pavka14/tmp_aa/blob/main/ROADMAP.md" target="_blank" rel="noopener noreferrer">Roadmap</a></li>
+</ul>
+<h2>Overview</h2>
+<p>This repository is being onboarded for a new Django product that provides a website and DRF API for viewing and managing network infrastructure.</p>
+<p>The system models:
+- sites (datacentres)
+- devices (routers and switches) at each site
+- interfaces on each device
+- existing connections between devices</p>
+<p>For active records, interface names must be unique per device.</p>
+<p>Planned access model:
+- <strong>Network engineers</strong>: view + manage
+- <strong>Customers</strong>: view only</p>
+<p>User and permission administration for now will be handled by superusers through Django admin.</p>
+<p>UI approach is TBD between a ready-made theme and a Bootstrap-based custom UI.</p>
+<h2>Overall high-level design of the app</h2>
+<h3>Purpose and scope of this repository</h3>
+<p>This repository is intentionally a toy repository and a crude proof of concept. Its job is to show the general approach to modelling network inventory and connectivity data in Django, not to present a finished system that is ready for real operational use. The current implementation is therefore useful as a sketch of ideas, tradeoffs, and likely future directions, but it should not be mistaken for a production design.</p>
+<h3>Current application shape</h3>
+<p>At present, the codebase is centered on a Django web application with server-rendered views, templates, static assets, and a core data model for sites, devices, interfaces, and connections. A Django REST Framework Application Programming Interface is already implemented in this repository alongside the website.</p>
+<p>The current domain hierarchy is:
+- site
+- device
+- interface
+- connection</p>
+<p>That hierarchy is helpful for understanding the business domain, but it also exposes why the current proof of concept is incomplete: changes higher in the tree have consequences for everything below them, and connection records are especially awkward because each connection has two ends that may be affected by upstream changes.</p>
+<h3>Why the current implementation is not production-ready</h3>
+<p>None of the implementation in this repository should be treated as production-ready.</p>
+<h4>Authentication and caller trust</h4>
+<p>If and when the Application Programming Interface is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Transport Layer Security (TLS), whitelisted caller hosts, and a rule that only modern cryptography methods are allowed. Without those controls, an infrastructure-management interface would be much too exposed.</p>
+<h4>Caching, request throttling, and abuse handling</h4>
+<p>Caching is not currently considered at all. Still, "to be fair, such a service will have low traffic and caching will probably not make much of a difference". Even so, that should be treated as a conscious limitation of the proof of concept, not as proof that caching concerns never matter.</p>
+<p>The API also has no rate limits at present. That is probably not a bad thing in itself, because rate limits can be counter-productive in some operational cases. On the other hand, it may be a good idea to link the service to fail2ban and blacklist IP addresses that generate too many unauthorized attempts.</p>
+<h4>Data modelling depth</h4>
+<p>The database model needs much more operational data and metadata than it currently has. For example, a serious implementation would need to track connection capacity, used capacity per port, remaining capacity per port, Virtual Local Area Network (VLAN) IDs that are taken, reserved, or free, attached interface extras such as a fibre-to-copper adapter, and other inventory details needed for safe automation and planning. The current schema only hints at the main entities; it does not yet capture the full operational state that a real system would need.</p>
+<h4>Deletion and referential fallout</h4>
+<p>Even in its current limited state, the model is weak because it still allows deletions without fully accounting for the fallout. If something higher in the hierarchy is deleted, related records below it can be left hanging. That is already a problem for sites, devices, and interfaces, and it is doubly problematic for a connection because a connection has two ends that both need to remain consistent. A robust design would need stronger lifecycle rules, soft deletion, archival behavior, or workflow-driven change handling so that records cannot drift into broken states.</p>
+<h4>Connection endpoint modelling</h4>
+<p>One explicit requirement for this proof of concept was that connection ends should carry triple foreign keys to site, device, and interface. That makes the database denormalized, which is <strong>not a good idea</strong>. Validations have been added as mitigation so that inconsistent combinations are rejected, but validation is only damage control here. It is not a proper substitute for a cleaner normalized design.</p>
+<p>There is another modelling weakness as well: connections are not really interface-to-interface in the operational sense. They are from a sub-interface. The present proof of concept simplifies that detail away, which is acceptable for a sketch, but not for a system that needs to reflect real network behavior accurately.</p>
+<h4>Status lifecycle</h4>
+<p>Connection status handling is also too simple. A production design would need states that reflect transition and uncertainty, not just a flat notion of whether something exists. Examples include a connection being requested, being built, being in the process of being dropped, or being in an unknown state that needs investigation and repair. Those lifecycle states matter because network changes are slow, multi-step operations rather than instantaneous database updates.</p>
+<h3>Why workflow-oriented handling matters more than raw Create, Read, Update, Delete</h3>
+<p>In practice, much of the Create, Read, Update, Delete behavior does not belong in a public Application Programming Interface at all. It belongs in views or other workflow-oriented handlers that can manage the full chain of dependent actions safely. For example, building a connection is slow and may involve multiple systems. The better approach would be for an API to request a connection, record that request in a <code>requested</code> state, and then wait while the underlying work happens. After some time, once the connection has actually been built or rejected, the result should be posted back to a callback endpoint. That approach matches the real-world shape of the operation much better than pretending that a connection can be created immediately by a single synchronous Create action.</p>
+<h3>Current repository structure</h3>
+<p>The repository is organized to support that proof-of-concept work and its documentation:
+- <code>src/</code> contains the Django code, including the current web views, templates, static assets, models, and the unit tests. The future API will also live in this code area when it is added.
+- <code>src/infrastructure/tests/</code> contains the current unit and application tests.
+- <code>.github/workflows/django-tests.yml</code> defines the GitHub workflow that installs dependencies, runs migrations, and executes the Django test suite.
+- <code>.github/copilot-instructions.md</code> contains agent development instructions for future repository work.
+- <code>PRD.md</code> contains the Product Requirements Document, which explains the intended product scope and major design assumptions.
+- <code>ROADMAP.md</code> contains the implementation roadmap and is updated with each pull request so the current state of delivery stays visible.</p>
+<h3>Technical choices and current non-goals</h3>
+<p>PostgreSQL is used because it supports transactions, proper foreign keys, partial unique constraints, and other database features that matter for a serious relational model. It would be much easier to just do it all in SQLite as a demo, but that is just not serious.</p>
+<p>Proper deployment configuration and deployment pipelines to staging, production, and similar environments are currently out of scope. This repository is about proving the broad application shape and documenting the main design tradeoffs first; it is not yet trying to solve full delivery and operations concerns.</p>
+<h2>Assumptions and limitations</h2>
+<p>TODO: document assumptions and known limits.</p>
+<ul>
+<li>Temporary proof-of-concept limitation: change permissions are granted only to superusers at this stage.</li>
+<li>The repository now includes a proof-of-concept migration that creates <code>admin</code> / <code>admin123</code> for local testing only (strictly prohibited for real-world deployment).</li>
+<li>Note: deployment architecture implementation (async Django via ASGI, a Gunicorn service running multiple Uvicorn workers—typically about 2x available CPU cores—fronted by Nginx reverse proxy) is intentionally out of scope for this onboarding phase.</li>
+<li>Temporary proof-of-concept limitation: current CI test setup installs dependencies and applies migrations on every run. In a production-grade setup, CI should instead use a pre-built container image with dependencies pre-installed and migrations pre-applied, maintained by a separate workflow that rebuilds the image when requirements or migrations change.</li>
+<li>Temporary proof-of-concept limitation: <code>src/requirements.txt</code> intentionally tracks unfrozen/latest dependency versions for this toy repository; production-grade setups should pin and regularly review exact versions.</li>
+<li>Temporary proof-of-concept limitation: there is currently only one settings environment. A production-grade setup should use separate settings for local development, CI, production (and optionally staging), selected by an environment variable from <code>.env</code>.</li>
+<li>Temporary proof-of-concept limitation: tests intentionally have no explanatory comments because the current test cases are simple enough to be self-explanatory. In a production-grade test suite, each test should explain what it does and why.</li>
+<li>Temporary proof-of-concept limitation: in the Docker setup, the application and database run on the same machine and in the same container, which is "good enough for now".</li>
+<li>Temporary proof-of-concept limitation: the current Docker container must be rebuilt after code changes instead of reading updated source code directly from a mounted working tree, which is "good enough for now".</li>
+<li>Temporary proof-of-concept limitation: the current Docker setup recreates the database on each run instead of using a persistent copy, which is "good enough for now".</li>
+<li>Temporary proof-of-concept limitation: the data model still needs sanity checks such as capping how many interface records a device can have based on physical reality and preventing impossible connections such as a port being connected to itself.</li>
+</ul>
+<h2>REST API</h2>
+<p>The application exposes a full REST API built with Django REST Framework (DRF).</p>
+<h3>Interactive documentation (browser)</h3>
+<p>Once the application is running, the following interactive UIs are available without any additional tooling:</p>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/schema/swagger/</code></td>
+<td>Swagger UI — try requests directly from the browser</td>
+</tr>
+<tr>
+<td><code>/api/schema/redoc/</code></td>
+<td>ReDoc — clean reference documentation</td>
+</tr>
+<tr>
+<td><code>/api/schema/</code></td>
+<td>Raw OpenAPI schema download (JSON/YAML)</td>
+</tr>
+</tbody>
+</table>
+<h3>Endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Prefix</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/v1/sites/</code></td>
+<td>List all sites</td>
+</tr>
+<tr>
+<td><code>GET /api/v1/devices/</code></td>
+<td>List all devices</td>
+</tr>
+<tr>
+<td><code>GET /api/v1/interfaces/</code></td>
+<td>List all interfaces</td>
+</tr>
+<tr>
+<td><code>GET /api/v1/connections/</code></td>
+<td>List all connections</td>
+</tr>
+<tr>
+<td><code>GET /api/v1/connections/traced/?type=&lt;site\|device\|interface&gt;&amp;id=&lt;pk&gt;</code></td>
+<td>List all connections touching a given object</td>
+</tr>
+</tbody>
+</table>
+<p>Standard CRUD (POST, GET <code>{id}/</code>, PUT/PATCH <code>{id}/</code>, DELETE <code>{id}/</code>) is available on all four model prefixes.  List endpoints return paginated results (100 items per page).</p>
+<h3>Authentication</h3>
+<p>The API uses Django session authentication.  Log in via the Django admin (<code>/admin/</code>) or the standard login form to obtain a session cookie.  All endpoints (including read-only) require authentication; unauthenticated requests receive a <code>403 Forbidden</code> response.</p>
+<p>Write operations (POST, PUT, PATCH, DELETE) are restricted to superusers.</p>
+<h3>A note on docstrings</h3>
+<p>DRF-Spectacular automatically includes ViewSet and serializer docstrings in the generated OpenAPI schema and renders them in Swagger UI and ReDoc.  Any text in a docstring is therefore <strong>user-facing documentation</strong> and should be written accordingly.</p>
+<h2>How to set up, install and run</h2>
+<h3>Docker requirements</h3>
+<ul>
+<li>Docker must be installed and available on your host machine.</li>
+</ul>
+<h3>Run with Docker - Option 1</h3>
+<ol>
+<li>Build the image locally from this repository:
+   <code>bash
+   docker build -t tmp_aa:local .</code></li>
+<li>Run the container:
+   <code>bash
+   docker run --rm -p 8000:8000 tmp_aa:local</code></li>
+</ol>
+<p>This builds everything from scratch and is therefore terribly slow.</p>
+<h3>Run with Docker - Option 2</h3>
+<p>We considered distributing a pre-baked local image archive from this repository, but it required an enormous download split across several files, so it was not practical and was abandoned.</p>
+<p>Notes:
+- This approach would have created a maintenance headache: the baked image archive would need to be rebuilt and refreshed with future developments.
+- We also considered publishing the image via <code>ghcr.io</code>, but in this PoC stage it was not deemed practical because the user received an <code>access denied</code> error.</p>
+<h3>Run without Docker - Option 3 (not practical - too demanding to the tester)</h3>
+<p>This is how a tester can run the app similarly to the author setup, but it pre-supposes the tester already has PostgreSQL on the host and can create a new user with database-creation permissions.</p>
+<ol>
+<li>Create and activate a local virtual environment:
+   <code>bash
+   python -m venv .venv
+   source .venv/bin/activate</code></li>
+<li>Install dependencies:
+   <code>bash
+   pip install -r src/requirements.txt</code></li>
+<li>Create a PostgreSQL user and database on the host (example):
+   <code>bash
+   createuser --pwprompt --createdb aa_user
+   createdb -O aa_user aa_db</code></li>
+<li>Export DB settings to point Django to that host PostgreSQL instance:
+   <code>bash
+   export POSTGRES_HOST=127.0.0.1
+   export POSTGRES_PORT=5432
+   export POSTGRES_DB=aa_db
+   export POSTGRES_TEST_DB=aa_test_db
+   export POSTGRES_USER=aa_user
+   export POSTGRES_PASSWORD=your_password</code></li>
+<li>Run migrations and start Django:
+   <code>bash
+   python src/manage.py migrate --noinput
+   python src/manage.py runserver 0.0.0.0:8000</code></li>
+</ol>
+<h3>Option 4 - TODO</h3>
+<p>The demo site will be hosted elsewhere and linked from this document.</p>
+<p>Then open <code>http://127.0.0.1:8000/</code> in your browser on the host machine (outside the container).</p>
+<h3>Temporary superuser creation (CLI)</h3>
+<p>The proof-of-concept migration creates <code>admin/admin123</code> automatically.</p>
+</div>
 {% endblock %}

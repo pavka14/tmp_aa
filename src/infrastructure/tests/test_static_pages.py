@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.views import serve
 from django.test import RequestFactory, TestCase
 
@@ -21,3 +22,26 @@ class TestStaticWebsitePages(TestCase):
         self.assertEqual(static_response.status_code, 200)
         static_content = b"".join(static_response.streaming_content).decode()
         self.assertIn("background-color", static_content)
+
+    def test_home_shows_login_prompt_for_anonymous(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "const isAuthenticated = false;")
+        self.assertContains(
+            response,
+            'Please <a href="${homeUrls.admin}">log in</a> and reload',
+        )
+
+    def test_home_sets_authenticated_flag_for_logged_in_user(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(username="viewer")
+        self.client.force_login(user)
+
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "const isAuthenticated = true;")
+
+    def test_docs_page_renders_readme_html(self):
+        response = self.client.get("/docs/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<h1>Temporary test repository</h1>")
