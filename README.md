@@ -16,6 +16,8 @@ The system models:
 - interfaces on each device
 - existing connections between devices
 
+For active records, interface names must be unique per device.
+
 Planned access model:
 - **Network engineers**: view + manage
 - **Customers**: view only
@@ -49,7 +51,7 @@ If and when the Application Programming Interface is added, its authentication w
 #### Caching, request throttling, and abuse handling
 Caching is not currently considered at all. Still, "to be fair, such a service will have low traffic and caching will probably not make much of a difference". Even so, that should be treated as a conscious limitation of the proof of concept, not as proof that caching concerns never matter.
 
-The API also has no rate limits at present. That is probably not a bad thing in itself, because rate limits can be counter-productive in some operational cases. On the other hand, it may be a good idea to link the service to fail2ban and blacklist Internet Protocol addresses that generate too many unauthorized attempts.
+The API also has no rate limits at present. That is probably not a bad thing in itself, because rate limits can be counter-productive in some operational cases. On the other hand, it may be a good idea to link the service to fail2ban and blacklist IP addresses that generate too many unauthorized attempts.
 
 #### Data modelling depth
 The database model needs much more operational data and metadata than it currently has. For example, a serious implementation would need to track connection capacity, used capacity per port, remaining capacity per port, Virtual Local Area Network (VLAN) IDs that are taken, reserved, or free, attached interface extras such as a fibre-to-copper adapter, and other inventory details needed for safe automation and planning. The current schema only hints at the main entities; it does not yet capture the full operational state that a real system would need.
@@ -93,6 +95,9 @@ TODO: document assumptions and known limits.
 - Temporary proof-of-concept limitation: there is currently only one settings environment. A production-grade setup should use separate settings for local development, CI, production (and optionally staging), selected by an environment variable from `.env`.
 - Temporary proof-of-concept limitation: tests intentionally have no explanatory comments because the current test cases are simple enough to be self-explanatory. In a production-grade test suite, each test should explain what it does and why.
 - Temporary proof-of-concept limitation: in the Docker setup, the application and database run on the same machine and in the same container, which is "good enough for now".
+- Temporary proof-of-concept limitation: the current Docker container must be rebuilt after code changes instead of reading updated source code directly from a mounted working tree, which is "good enough for now".
+- Temporary proof-of-concept limitation: the current Docker setup recreates the database on each run instead of using a persistent copy, which is "good enough for now".
+- Temporary proof-of-concept limitation: the data model still needs sanity checks such as capping how many interface records a device can have based on physical reality and preventing impossible connections such as a port being connected to itself.
 
 ## REST API
 

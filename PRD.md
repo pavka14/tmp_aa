@@ -11,7 +11,7 @@ Build a Django-based service that lets users view network infrastructure and con
 ### Core Domain Objects
 - **Site**: a datacentre hosting network infrastructure.
 - **Device**: a router or switch located at a site.
-- **Interface**: a network interface on a device.
+- **Interface**: a network interface on a device. For active records, the `(device, name)` combination must be unique.
 - **Connection**: an existing link between device interfaces.
 
 ### Functional Requirements
@@ -182,6 +182,9 @@ Implementation status:
 - **API authentication**: The API currently uses Django session authentication (cookie-based). Alternatives include API Key authentication (simple, but requires key management infrastructure), Bearer/JWT tokens (stateless, but requires token issuance, rotation, and revocation logic), and OAuth 2.0 (the most complete and standards-compliant approach, supporting delegated access and fine-grained scopes). OAuth 2.0 is considered overkill for a demo because it requires additional infrastructure: an authorization server, token store, client management, refresh-token rotation, and scope definitions. Session auth is acceptable for this PoC where all access is first-party and browser-based.
 - **API permission model**: Write access is currently guarded solely by Django's superuser flag (`is_superuser`). This is a demo-grade shortcut. A production-ready system should use group-based role permissions (e.g. a `Network Engineers` group with explicit per-model write grants) so that write access can be granted to non-superuser accounts without giving them full administrative privileges.
 - **API-level validators**: The `SiteSerializer` enforces a name length window (4–40 characters) that is stricter than the underlying model field (max 64). This is a proof-of-concept demonstration of layered validation. In production, model and serializer constraints should be aligned or the stricter constraint should live in the model so it is enforced consistently across all code paths.
+- **Model sanity checks**: The current schema still lacks operational sanity checks. For example, it does not yet limit the number of interface records per device to what the physical device can actually support, and it does not yet reject impossible self-connections such as connecting a port to the same port.
+- **Docker runtime ergonomics**: The current Docker setup must be rebuilt to pick up code changes instead of reading source directly from the working tree, which is "good enough for now".
+- **Docker data persistence**: The current Docker setup recreates the database each time instead of using a persistent copy, which is "good enough for now".
 
 ## Future developments
 - Replace temporary superuser-only write access with group-based permissions.

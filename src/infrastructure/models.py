@@ -16,11 +16,12 @@ class SoftDeleteModel(models.Model):
     time_deleted = models.DateTimeField(null=True, blank=True, default=None)
     active = models.BooleanField(default=True, db_index=True)
 
+    all_objects = models.Manager()
     objects = ActiveManager()
 
     class Meta:
         abstract = True
-        base_manager_name = "objects"
+        base_manager_name = "all_objects"
         default_manager_name = "objects"
 
     def delete(self, using=None, keep_parents=False):
@@ -42,11 +43,23 @@ class Site(SoftDeleteModel):
     status = models.CharField(max_length=32, default=SITE_STATUS_PLANNED, db_index=True)
 
     class Meta:
+        verbose_name = "site"
+        verbose_name_plural = "sites"
         constraints = [
             models.UniqueConstraint(
                 fields=["name"],
                 condition=Q(active=True),
                 name="uniq_active_site_name",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    status__in=[
+                        "Active",
+                        "Planned",
+                        "Decommissioned",
+                    ]
+                ),
+                name="site_status_allowed_values",
             ),
         ]
 
@@ -60,6 +73,8 @@ class Device(SoftDeleteModel):
     serial_number = models.CharField(max_length=256, null=False, blank=False)
 
     class Meta:
+        verbose_name = "device"
+        verbose_name_plural = "devices"
         constraints = [
             models.UniqueConstraint(
                 fields=["name"],
@@ -77,20 +92,6 @@ class Device(SoftDeleteModel):
         return self.name
 
 
-Site._meta.constraints.append(
-    models.CheckConstraint(
-        condition=Q(
-            status__in=[
-                Site.SITE_STATUS_ACTIVE,
-                Site.SITE_STATUS_PLANNED,
-                Site.SITE_STATUS_DECOMMISSIONED,
-            ]
-        ),
-        name="site_status_allowed_values",
-    )
-)
-
-
 class Interface(SoftDeleteModel):
     name = models.CharField(max_length=64, null=False, blank=False)
     device = models.ForeignKey(
@@ -98,10 +99,18 @@ class Interface(SoftDeleteModel):
     )
 
     class Meta:
-        abstract = False
+        verbose_name = "interface"
+        verbose_name_plural = "interfaces"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device", "name"],
+                condition=Q(active=True),
+                name="uniq_active_interface_device_name",
+            ),
+        ]
 
     def __str__(self):
-        return self.name
+        return f"{self.device.name} / {self.name}"
 
 
 class Connection(SoftDeleteModel):
@@ -149,11 +158,22 @@ class Connection(SoftDeleteModel):
     )
 
     class Meta:
+        verbose_name = "connection"
+        verbose_name_plural = "connections"
         constraints = [
             models.UniqueConstraint(
                 fields=["connection_id"],
                 condition=Q(active=True),
                 name="uniq_active_connection_connection_id",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    status__in=[
+                        "Connected",
+                        "Disconnected",
+                    ]
+                ),
+                name="connection_status_allowed_values",
             ),
         ]
 
@@ -191,16 +211,3 @@ class Connection(SoftDeleteModel):
 
     def __str__(self):
         return self.connection_id
-
-
-Connection._meta.constraints.append(
-    models.CheckConstraint(
-        condition=Q(
-            status__in=[
-                Connection.CONNECTION_STATUS_CONNECTED,
-                Connection.CONNECTION_STATUS_DISCONNECTED,
-            ]
-        ),
-        name="connection_status_allowed_values",
-    )
-)
