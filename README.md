@@ -32,7 +32,7 @@ UI approach is TBD between a ready-made theme and a Bootstrap-based custom UI.
 This repository is intentionally a toy repository and a crude proof of concept. Its job is to show the general approach to modelling network inventory and connectivity data in Django, not to present a finished system that is ready for real operational use. The current implementation is therefore useful as a sketch of ideas, tradeoffs, and likely future directions, but it should not be mistaken for a production design.
 
 ### Current application shape
-At present, the codebase is centered on a Django web application with server-rendered views, templates, static assets, and a core data model for sites, devices, interfaces, and connections. A Django REST Framework Application Programming Interface is part of the intended architecture, but it still needs to be added. In other words, the repository currently demonstrates the website side of the concept directly in code, while the Application Programming Interface remains part of the planned next steps.
+At present, the codebase is centered on a Django web application with server-rendered views, templates, static assets, and a core data model for sites, devices, interfaces, and connections. A Django REST Framework Application Programming Interface (API) is part of the intended architecture, but it still needs to be added. In other words, the repository currently demonstrates the website side of the concept directly in code, while the API remains part of the planned next steps.
 
 The current domain hierarchy is:
 - site
@@ -46,7 +46,7 @@ That hierarchy is helpful for understanding the business domain, but it also exp
 None of the implementation in this repository should be treated as production-ready.
 
 #### Authentication and caller trust
-If and when the Application Programming Interface is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Transport Layer Security (TLS), whitelisted caller hosts, and a rule that only modern cryptography methods are allowed. Without those controls, an infrastructure-management interface would be much too exposed.
+If and when the API is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Transport Layer Security (TLS), whitelisted caller hosts, and a rule that only modern cryptography methods are allowed. Without those controls, an infrastructure-management interface would be much too exposed.
 
 #### Caching, request throttling, and abuse handling
 Caching is not currently considered at all. Still, "to be fair, such a service will have low traffic and caching will probably not make much of a difference". Even so, that should be treated as a conscious limitation of the proof of concept, not as proof that caching concerns never matter.
@@ -68,7 +68,7 @@ There is another modelling weakness as well: connections are not really interfac
 Connection status handling is also too simple. A production design would need states that reflect transition and uncertainty, not just a flat notion of whether something exists. Examples include a connection being requested, being built, being in the process of being dropped, or being in an unknown state that needs investigation and repair. Those lifecycle states matter because network changes are slow, multi-step operations rather than instantaneous database updates.
 
 ### Why workflow-oriented handling matters more than raw Create, Read, Update, Delete
-In practice, much of the Create, Read, Update, Delete behavior does not belong in a public Application Programming Interface at all. It belongs in views or other workflow-oriented handlers that can manage the full chain of dependent actions safely. For example, building a connection is slow and may involve multiple systems. The better approach would be for an API to request a connection, record that request in a `requested` state, and then wait while the underlying work happens. After some time, once the connection has actually been built or rejected, the result should be posted back to a callback endpoint. That approach matches the real-world shape of the operation much better than pretending that a connection can be created immediately by a single synchronous Create action.
+In practice, much of the Create, Read, Update, Delete behavior does not belong in a public API at all. It belongs in views or other workflow-oriented handlers that can manage the full chain of dependent actions safely. For example, building a connection is slow and may involve multiple systems. The better approach would be for an API to request a connection, record that request in a `requested` state, and then wait while the underlying work happens. After some time, once the connection has actually been built or rejected, the result should be posted back to a callback endpoint. That approach matches the real-world shape of the operation much better than pretending that a connection can be created immediately by a single synchronous Create action.
 
 ### Current repository structure
 The repository is organized to support that proof-of-concept work and its documentation:
@@ -191,10 +191,10 @@ This is how a tester can run the app similarly to the author setup, but it pre-s
    python src/manage.py runserver 0.0.0.0:8000
    ```
 
-### Option 4 - TODO
-The demo site will be hosted elsewhere and linked from this document.
+### Option 4 - Preferred
+The demo is already hosted at https://aa.moz2.com/
 
-Then open `http://127.0.0.1:8000/` in your browser on the host machine (outside the container).
+Then open `https://aa.moz2.com/` in your browser.
 
 ### Temporary superuser creation (CLI)
-The proof-of-concept migration creates `admin/admin123` automatically.
+The proof-of-concept migration creates a superuser account admin/admin123 automatically.

@@ -28,7 +28,7 @@
 <h3>Purpose and scope of this repository</h3>
 <p>This repository is intentionally a toy repository and a crude proof of concept. Its job is to show the general approach to modelling network inventory and connectivity data in Django, not to present a finished system that is ready for real operational use. The current implementation is therefore useful as a sketch of ideas, tradeoffs, and likely future directions, but it should not be mistaken for a production design.</p>
 <h3>Current application shape</h3>
-<p>At present, the codebase is centered on a Django web application with server-rendered views, templates, static assets, and a core data model for sites, devices, interfaces, and connections. A Django REST Framework Application Programming Interface is already implemented in this repository alongside the website.</p>
+<p>At present, the codebase is centered on a Django web application with server-rendered views, templates, static assets, and a core data model for sites, devices, interfaces, and connections. A Django REST Framework Application Programming Interface (API) is already implemented in this repository alongside the website.</p>
 <p>The current domain hierarchy is:
 - site
 - device
@@ -38,7 +38,7 @@
 <h3>Why the current implementation is not production-ready</h3>
 <p>None of the implementation in this repository should be treated as production-ready.</p>
 <h4>Authentication and caller trust</h4>
-<p>If and when the Application Programming Interface is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Transport Layer Security (TLS), whitelisted caller hosts, and a rule that only modern cryptography methods are allowed. Without those controls, an infrastructure-management interface would be much too exposed.</p>
+<p>If and when the API is added, its authentication would need to be far stronger than anything appropriate for this proof of concept. A real system would need protections such as OAuth 2.0, signed requests, Transport Layer Security (TLS), whitelisted caller hosts, and a rule that only modern cryptography methods are allowed. Without those controls, an infrastructure-management interface would be much too exposed.</p>
 <h4>Caching, request throttling, and abuse handling</h4>
 <p>Caching is not currently considered at all. Still, "to be fair, such a service will have low traffic and caching will probably not make much of a difference". Even so, that should be treated as a conscious limitation of the proof of concept, not as proof that caching concerns never matter.</p>
 <p>The API also has no rate limits at present. That is probably not a bad thing in itself, because rate limits can be counter-productive in some operational cases. On the other hand, it may be a good idea to link the service to fail2ban and blacklist IP addresses that generate too many unauthorized attempts.</p>
@@ -52,7 +52,7 @@
 <h4>Status lifecycle</h4>
 <p>Connection status handling is also too simple. A production design would need states that reflect transition and uncertainty, not just a flat notion of whether something exists. Examples include a connection being requested, being built, being in the process of being dropped, or being in an unknown state that needs investigation and repair. Those lifecycle states matter because network changes are slow, multi-step operations rather than instantaneous database updates.</p>
 <h3>Why workflow-oriented handling matters more than raw Create, Read, Update, Delete</h3>
-<p>In practice, much of the Create, Read, Update, Delete behavior does not belong in a public Application Programming Interface at all. It belongs in views or other workflow-oriented handlers that can manage the full chain of dependent actions safely. For example, building a connection is slow and may involve multiple systems. The better approach would be for an API to request a connection, record that request in a <code>requested</code> state, and then wait while the underlying work happens. After some time, once the connection has actually been built or rejected, the result should be posted back to a callback endpoint. That approach matches the real-world shape of the operation much better than pretending that a connection can be created immediately by a single synchronous Create action.</p>
+<p>In practice, much of the Create, Read, Update, Delete behavior does not belong in a public API at all. It belongs in views or other workflow-oriented handlers that can manage the full chain of dependent actions safely. For example, building a connection is slow and may involve multiple systems. The better approach would be for an API to request a connection, record that request in a <code>requested</code> state, and then wait while the underlying work happens. After some time, once the connection has actually been built or rejected, the result should be posted back to a callback endpoint. That approach matches the real-world shape of the operation much better than pretending that a connection can be created immediately by a single synchronous Create action.</p>
 <h3>Current repository structure</h3>
 <p>The repository is organized to support that proof-of-concept work and its documentation:
 - <code>src/</code> contains the Django code, including the current web views, templates, static assets, models, and the unit tests. The future API will also live in this code area when it is added.
@@ -189,10 +189,10 @@
    python src/manage.py migrate --noinput
    python src/manage.py runserver 0.0.0.0:8000</code></li>
 </ol>
-<h3>Option 4 - TODO</h3>
-<p>The demo site will be hosted elsewhere and linked from this document.</p>
-<p>Then open <code>http://127.0.0.1:8000/</code> in your browser on the host machine (outside the container).</p>
+<h3>Option 4 - Preferred</h3>
+<p>The demo is already hosted at https://aa.moz2.com/</p>
+<p>Then open <code>https://aa.moz2.com/</code> in your browser.</p>
 <h3>Temporary superuser creation (CLI)</h3>
-<p>The proof-of-concept migration creates <code>admin/admin123</code> automatically.</p>
+<p>The proof-of-concept migration creates a superuser account admin/admin123 automatically.</p>
 </div>
 {% endblock %}
