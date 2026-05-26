@@ -2,5 +2,133 @@
 
 {% block content %}
 <h1 class="h3">API Specifications</h1>
-<p class="mb-0">to do</p>
+
+<p class="lead">
+  This application exposes a REST API built with
+  <strong>Django REST Framework (DRF)</strong> and documented interactively
+  with <strong>DRF-Spectacular</strong>.
+</p>
+
+<h2 class="h5 mt-4">Base URL</h2>
+<p>All API endpoints live under <code>/api/v1/</code>.</p>
+
+<h2 class="h5 mt-4">Resources &amp; endpoints</h2>
+<table class="table table-bordered table-sm">
+  <thead class="table-light">
+    <tr><th>Resource</th><th>Endpoint</th><th>Operations</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Sites</td>
+      <td><a href="/api/v1/sites/" target="_blank" rel="noopener noreferrer"><code>/api/v1/sites/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Devices</td>
+      <td><a href="/api/v1/devices/" target="_blank" rel="noopener noreferrer"><code>/api/v1/devices/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Interfaces</td>
+      <td><a href="/api/v1/interfaces/" target="_blank" rel="noopener noreferrer"><code>/api/v1/interfaces/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Connections</td>
+      <td><a href="/api/v1/connections/" target="_blank" rel="noopener noreferrer"><code>/api/v1/connections/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Traced connections</td>
+      <td><code>/api/v1/connections/traced/</code></td>
+      <td>
+        list all connections touching a site, device, or interface.<br>
+        Query parameters: <code>type</code> (site&nbsp;/&nbsp;device&nbsp;/&nbsp;interface)
+        and <code>id</code> (primary key).
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="alert alert-info mt-1" role="alert">
+  <strong>Tip:</strong> Each record returned by the list endpoints includes a
+  <code>url</code> field — a direct link to its detail page in the DRF browsable
+  API.  Click any <code>url</code> value in the response to navigate to that record.
+</div>
+
+<h2 class="h5 mt-4">Browse traced connections</h2>
+<p>
+  Use the form below to open the traced-connections endpoint directly in your
+  browser.  You must be logged in (session cookie) for the request to succeed.
+</p>
+<form method="get" action="/api/v1/connections/traced/" target="_blank"
+      class="row g-2 align-items-end">
+  <div class="col-auto">
+    <label for="traced-type" class="form-label mb-1">Type</label>
+    <select id="traced-type" name="type" class="form-select form-select-sm">
+      <option value="site">site</option>
+      <option value="device">device</option>
+      <option value="interface">interface</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <label for="traced-id" class="form-label mb-1">ID (primary key)</label>
+    <input id="traced-id" type="number" name="id" min="1" placeholder="e.g. 1"
+           class="form-control form-control-sm" required>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-primary">Trace</button>
+  </div>
+</form>
+
+<h2 class="h5 mt-4">Authentication</h2>
+<p>
+  The API uses <strong>Django session authentication</strong>. Log in via the
+  <a href="/admin/">Admin</a> interface (or any standard Django login view) to
+  obtain a session cookie, then include that cookie in subsequent API requests.
+</p>
+<p>
+  Read operations (GET) are available to any authenticated user.
+  Write operations (POST, PUT, PATCH, DELETE) are restricted to
+  <strong>superusers</strong> only.
+</p>
+
+<h2 class="h5 mt-4">Interactive documentation</h2>
+<p>
+  Two interactive API browsers are available. Both let you authenticate with
+  your session cookie and make live requests directly from the browser.
+</p>
+<ul>
+  <li>
+    <strong><a href="/api/schema/swagger/" target="_blank" rel="noopener noreferrer">Swagger UI</a></strong>
+    — explore and try all endpoints via a rich interactive interface.
+  </li>
+  <li>
+    <strong><a href="/api/schema/redoc/" target="_blank" rel="noopener noreferrer">ReDoc</a></strong>
+    — a clean, read-focused reference view of the full API schema.
+  </li>
+  <li>
+    <strong><a href="/api/schema/" target="_blank" rel="noopener noreferrer">OpenAPI schema (YAML)</a></strong>
+    — raw machine-readable schema for use with code generators or API clients.
+  </li>
+</ul>
+
+<h2 class="h5 mt-4">How to use Swagger UI</h2>
+<ol>
+  <li>Log in to the <a href="/admin/">Admin</a> interface in another browser tab so your session cookie is set.</li>
+  <li>Open <a href="/api/schema/swagger/" target="_blank" rel="noopener noreferrer">Swagger UI</a>.</li>
+  <li>Click <strong>Authorize</strong>, then tick <em>sessionAuth</em> and click <strong>Authorize</strong>.</li>
+  <li>Expand any endpoint, click <strong>Try it out</strong>, fill in any required fields, and click <strong>Execute</strong>.</li>
+</ol>
+
+<div class="alert alert-warning mt-2" role="alert">
+  <strong>Note on write operations from Swagger UI:</strong>
+  Django's session authentication requires a CSRF token for POST, PUT, PATCH, and DELETE requests.
+  Swagger UI does not automatically include this token, so write operations (<em>Try it out</em>)
+  may fail with a <code>403 Forbidden (CSRF Failed)</code> response.
+  To work around this, copy the value of the <code>csrftoken</code> cookie from your browser's
+  developer tools and add it manually as an <code>X-CSRFToken</code> request header inside
+  Swagger UI's <em>Request headers</em> field before executing.
+  Read operations (GET) are not affected.
+</div>
 {% endblock %}
