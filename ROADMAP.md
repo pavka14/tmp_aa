@@ -42,14 +42,10 @@
 - [x] Update PRD with DRF, Spectacular, auth, permission, and validator design notes and limitations.
 
 ## Stage 6 — Website implementation (Django templates, dynamic data)
-- [ ] Add site list/detail pages.
-- [ ] Add device list/detail pages by site.
-- [ ] Add interface and connection views by device.
-- [ ] Add web URL routing for template views.
-- [ ] Add manage actions/forms for superuser permissions at this stage.
-- [ ] Add UI tests for key browse/manage flows.
+- [x] wire dynamic data to homepage
+- [x] update documentation
 
-## Stage 7 — Quality and operability
+## Stage 7 — Quality and operability (future)
 - [ ] Configure environment-based settings split (dev/test/prod-ready structure).
 - [ ] Add linting/formatting/static checks and documented local commands.
 - [ ] Add structured logging and error-handling conventions.
@@ -57,7 +53,7 @@
 - [ ] Expand test coverage for edge cases and permissions.
 - [ ] Document architecture and operational assumptions.
 
-## Stage 8 — Packaging and runnable environments
+## Stage 8 — Packaging and runnable environments (future)
 - [ ] Write complete installation and run instructions in README.
 - [ ] Add Dockerfile for local runnable service.
 - [ ] Add docker-compose setup for app + dependencies.
