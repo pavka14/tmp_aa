@@ -57,8 +57,12 @@ class SiteSerializer(serializers.ModelSerializer):
     than the underlying model field (max 64).  This is a proof-of-concept
     demonstration of how the API can impose additional validation on top of
     model-level constraints.
+
+    ``url`` is a self-link to the record's detail endpoint and is rendered as
+    a clickable hyperlink in the DRF browsable API.
     """
 
+    url = serializers.HyperlinkedIdentityField(view_name="site-detail")
     name = serializers.CharField(
         min_length=SITE_NAME_MIN_LENGTH,
         max_length=SITE_NAME_MAX_LENGTH,
@@ -66,25 +70,53 @@ class SiteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Site
-        fields = ["id", "name", "description", "status", "active", "time_deleted"]
+        fields = [
+            "url",
+            "id",
+            "name",
+            "description",
+            "status",
+            "active",
+            "time_deleted",
+        ]
         read_only_fields = ["id", "active", "time_deleted"]
 
 
 class DeviceSerializer(serializers.ModelSerializer):
-    """Serializer for the Device model."""
+    """
+    Serializer for the Device model.
+
+    ``url`` is a self-link to the record's detail endpoint.
+    """
+
+    url = serializers.HyperlinkedIdentityField(view_name="device-detail")
 
     class Meta:
         model = Device
-        fields = ["id", "name", "site", "serial_number", "active", "time_deleted"]
+        fields = [
+            "url",
+            "id",
+            "name",
+            "site",
+            "serial_number",
+            "active",
+            "time_deleted",
+        ]
         read_only_fields = ["id", "active", "time_deleted"]
 
 
 class InterfaceSerializer(serializers.ModelSerializer):
-    """Serializer for the Interface model."""
+    """
+    Serializer for the Interface model.
+
+    ``url`` is a self-link to the record's detail endpoint.
+    """
+
+    url = serializers.HyperlinkedIdentityField(view_name="interface-detail")
 
     class Meta:
         model = Interface
-        fields = ["id", "name", "device", "active", "time_deleted"]
+        fields = ["url", "id", "name", "device", "active", "time_deleted"]
         read_only_fields = ["id", "active", "time_deleted"]
 
 
@@ -152,14 +184,18 @@ class ConnectionSerializer(serializers.ModelSerializer):
     This behaviour is intentional but noteworthy: a partial-update payload
     represents a *delta* against the current state, not the complete new state.
     See the Limitations section in the PRD for the corresponding trade-off note.
+
+    ``url`` is a self-link to the record's detail endpoint.
     """
 
+    url = serializers.HyperlinkedIdentityField(view_name="connection-detail")
     start = ConnectionEndpointInputSerializer(write_only=True)
     end = ConnectionEndpointInputSerializer(write_only=True)
 
     class Meta:
         model = Connection
         fields = [
+            "url",
             "id",
             "connection_id",
             "name",

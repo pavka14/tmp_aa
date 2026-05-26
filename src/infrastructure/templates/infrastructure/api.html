@@ -18,10 +18,26 @@
     <tr><th>Resource</th><th>Endpoint</th><th>Operations</th></tr>
   </thead>
   <tbody>
-    <tr><td>Sites</td><td><code>/api/v1/sites/</code></td><td>list, create, retrieve, update, delete</td></tr>
-    <tr><td>Devices</td><td><code>/api/v1/devices/</code></td><td>list, create, retrieve, update, delete</td></tr>
-    <tr><td>Interfaces</td><td><code>/api/v1/interfaces/</code></td><td>list, create, retrieve, update, delete</td></tr>
-    <tr><td>Connections</td><td><code>/api/v1/connections/</code></td><td>list, create, retrieve, update, delete</td></tr>
+    <tr>
+      <td>Sites</td>
+      <td><a href="/api/v1/sites/" target="_blank" rel="noopener noreferrer"><code>/api/v1/sites/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Devices</td>
+      <td><a href="/api/v1/devices/" target="_blank" rel="noopener noreferrer"><code>/api/v1/devices/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Interfaces</td>
+      <td><a href="/api/v1/interfaces/" target="_blank" rel="noopener noreferrer"><code>/api/v1/interfaces/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
+    <tr>
+      <td>Connections</td>
+      <td><a href="/api/v1/connections/" target="_blank" rel="noopener noreferrer"><code>/api/v1/connections/</code></a></td>
+      <td>list, create, retrieve, update, delete</td>
+    </tr>
     <tr>
       <td>Traced connections</td>
       <td><code>/api/v1/connections/traced/</code></td>
@@ -33,6 +49,37 @@
     </tr>
   </tbody>
 </table>
+
+<div class="alert alert-info mt-1" role="alert">
+  <strong>Tip:</strong> Each record returned by the list endpoints includes a
+  <code>url</code> field — a direct link to its detail page in the DRF browsable
+  API.  Click any <code>url</code> value in the response to navigate to that record.
+</div>
+
+<h2 class="h5 mt-4">Browse traced connections</h2>
+<p>
+  Use the form below to open the traced-connections endpoint directly in your
+  browser.  You must be logged in (session cookie) for the request to succeed.
+</p>
+<form method="get" action="/api/v1/connections/traced/" target="_blank"
+      class="row g-2 align-items-end">
+  <div class="col-auto">
+    <label for="traced-type" class="form-label mb-1">Type</label>
+    <select id="traced-type" name="type" class="form-select form-select-sm">
+      <option value="site">site</option>
+      <option value="device">device</option>
+      <option value="interface">interface</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <label for="traced-id" class="form-label mb-1">ID (primary key)</label>
+    <input id="traced-id" type="number" name="id" min="1" placeholder="e.g. 1"
+           class="form-control form-control-sm" required>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-primary">Trace</button>
+  </div>
+</form>
 
 <h2 class="h5 mt-4">Authentication</h2>
 <p>
@@ -84,30 +131,4 @@
   Swagger UI's <em>Request headers</em> field before executing.
   Read operations (GET) are not affected.
 </div>
-
-<h2 class="h5 mt-4">Example: tracing connections by device</h2>
-<pre class="bg-light border rounded p-3"><code>GET /api/v1/connections/traced/?type=device&amp;id=2</code></pre>
-<p>Response (abbreviated):</p>
-<pre class="bg-light border rounded p-3"><code>{
-  "traced_object": {"type": "device", "id": 2, "name": "Core-Switch-02"},
-  "connections_count": 2,
-  "connections": [
-    {
-      "id": 12,
-      "connection_id": "CONN-1002",
-      "name": "Core Switch Uplink",
-      "status": "Connected",
-      "start_target": {
-        "site":      {"id": 1, "name": "London Data Center"},
-        "device":    {"id": 1, "name": "London-Router-01"},
-        "interface": {"id": 4, "name": "GigabitEthernet0/1"}
-      },
-      "end_target": {
-        "site":      {"id": 1, "name": "London Data Center"},
-        "device":    {"id": 2, "name": "Core-Switch-02"},
-        "interface": {"id": 9, "name": "GigabitEthernet0/24"}
-      }
-    }
-  ]
-}</code></pre>
 {% endblock %}
