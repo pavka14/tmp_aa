@@ -194,7 +194,7 @@ This is how a tester can run the app similarly to the author setup, but it pre-s
 ### Option 4 - Preferred
 The demo is already hosted at https://aa.moz2.com/
 
-Then open `https://aa.moz2.com/` in your browser.
+Just open `https://aa.moz2.com/` in your browser.
 
 ### Temporary superuser creation (CLI)
-The proof-of-concept migration creates a superuser account admin/admin123 automatically.
+The proof-of-concept migration creates a superuser account admin/admin123 automatically. You can use that account to log into the demo site.
