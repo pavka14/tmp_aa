@@ -112,6 +112,44 @@ class TestInterfaceModel(TestCase):
 
         self.assertEqual(str(interface), "Device 1 / eth0")
 
+    def test_speed_nullable_defaults_to_none(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        interface = Interface.objects.create(name="eth0", device=device)
+
+        self.assertIsNone(interface.speed)
+
+    def test_speed_stores_positive_integer(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        interface = Interface.objects.create(name="eth0", device=device, speed=1000)
+
+        interface.refresh_from_db()
+        self.assertEqual(interface.speed, 1000)
+
+    def test_status_defaults_to_up(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        interface = Interface.objects.create(name="eth0", device=device)
+
+        self.assertEqual(interface.status, Interface.INTERFACE_STATUS_UP)
+
+    def test_status_accepts_all_allowed_values(self):
+        site = Site.objects.create(name="Site 1")
+        device = Device.objects.create(name="Device 1", site=site, serial_number="sn-1")
+        for i, status_val in enumerate(
+            [
+                Interface.INTERFACE_STATUS_UP,
+                Interface.INTERFACE_STATUS_DOWN,
+                Interface.INTERFACE_STATUS_MAINTENANCE,
+            ]
+        ):
+            iface = Interface.objects.create(
+                name=f"eth{i}", device=device, status=status_val
+            )
+            iface.refresh_from_db()
+            self.assertEqual(iface.status, status_val)
+
     def test_verbose_names_are_defined(self):
         self.assertEqual(Site._meta.verbose_name, "site")
         self.assertEqual(Site._meta.verbose_name_plural, "sites")
